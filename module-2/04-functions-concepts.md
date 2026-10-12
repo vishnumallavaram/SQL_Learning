@@ -1,266 +1,431 @@
-# Module 2 Part 2: SQL Functions
+# Module 2 Part 1: SELECT, DISTINCT, and WHERE Filters
 
 ## Objective
-Learn the most common SQL functions used for strings, dates, numbers, conversions, and conditional logic.
+Learn how to retrieve exact data using SELECT, remove duplicates with DISTINCT, and filter rows with WHERE conditions.
 
 ---
 
-## 1. String Functions
-These are used to manipulate text values.
+## Practice Data for This Module
 
-### When to use
-- Clean names or email values.
-- Convert text to upper or lower case.
-- Remove extra spaces.
-- Extract part of a string.
-- Combine values from multiple columns.
-
-### Examples
-```sql
-SELECT CONCAT('SQL', ' ', 'Practice');
-```
+Use the following sample tables while learning SELECT and WHERE filters.
 
 ```sql
-SELECT LOWER('HYDERABAD');
-SELECT UPPER('hyderabad');
+CREATE TABLE customers (
+    customer_id INT PRIMARY KEY,
+    customer_name VARCHAR(100),
+    city VARCHAR(50),
+    status VARCHAR(20),
+    email VARCHAR(100),
+    phone VARCHAR(20)
+);
+
+CREATE TABLE products (
+    product_id INT PRIMARY KEY,
+    product_name VARCHAR(100),
+    category VARCHAR(50),
+    price DECIMAL(10,2),
+    stock INT,
+    is_active VARCHAR(10)
+);
+
+INSERT INTO customers (customer_id, customer_name, city, status, email, phone) VALUES
+(1, 'Anil', 'Hyderabad', 'Active', 'anil@gmail.com', '9876543210'),
+(2, 'Bhavna', 'Pune', 'Inactive', 'bhavna@gmail.com', NULL),
+(3, 'Chetan', 'Hyderabad', 'Active', 'chetan@gmail.com', '9988776655'),
+(4, 'Divya', 'Bengaluru', 'Active', 'divya@gmail.com', '9123456789'),
+(5, 'Esha', 'Delhi', 'Inactive', 'esha@gmail.com', NULL),
+(6, 'Farhan', 'Hyderabad', 'Active', 'farhan@gmail.com', '9090909090');
+
+INSERT INTO products (product_id, product_name, category, price, stock, is_active) VALUES
+(1, 'Laptop', 'Electronics', 45000.00, 15, 'Yes'),
+(2, 'Phone', 'Electronics', 25000.00, 30, 'Yes'),
+(3, 'Chair', 'Furniture', 2500.00, 20, 'Yes'),
+(4, 'Table', 'Furniture', 5000.00, 12, 'No'),
+(5, 'Monitor', 'Electronics', 12000.00, 18, 'Yes'),
+(6, 'Keyboard', 'Electronics', 1500.00, 35, 'Yes');
 ```
 
-```sql
-SELECT TRIM('  SQL  ');
-SELECT LTRIM('   SQL');
-SELECT RTRIM('SQL   ');
-```
-
-```sql
-SELECT LENGTH('SQL');
-SELECT CHAR_LENGTH('SQL');
-```
-
-```sql
-SELECT SUBSTRING('SQL Practice', 1, 3);
-```
-
-```sql
-SELECT REPLACE('Hello World', 'World', 'SQL');
-```
-
-```sql
-SELECT LEFT('SQL', 2);
-SELECT RIGHT('Practice', 4);
-```
+This dataset supports all examples in this file.
 
 ---
 
-## 2. Numeric Functions
-Used for calculations and math operations.
+## 1. SELECT Statement
+SELECT is used to read data from one or more columns in a table.
 
 ### When to use
-- Compare prices and totals.
-- Round values for reporting.
-- Calculate discounts or percentages.
-- Handle negative numbers safely.
+- You want to view only the columns you need.
+- You want to see all column values from a table.
+- You want to calculate values from columns.
 
-### Examples
+### Syntax
 ```sql
-SELECT ABS(-25);
+SELECT column1, column2
+FROM table_name;
 ```
-
-```sql
-SELECT ROUND(125.678, 2);
-```
-
-```sql
-SELECT CEIL(12.3);
-SELECT FLOOR(12.9);
-```
-
-```sql
-SELECT MOD(15, 4);
-```
-
-```sql
-SELECT POWER(3, 2);
-SELECT SQRT(81);
-```
-
----
-
-## 3. Date and Time Functions
-Used for working with dates and timestamps.
-
-### When to use
-- Find orders from the last 30 days.
-- Extract year or month from dates.
-- Add or subtract days from a date.
-- Compare dates in reports.
-
-### Examples
-```sql
-SELECT CURRENT_DATE;
-```
-
-```sql
-SELECT CURRENT_TIMESTAMP;
-SELECT NOW();
-```
-
-```sql
-SELECT YEAR('2025-01-15');
-SELECT MONTH('2025-01-15');
-SELECT DAY('2025-01-15');
-```
-
-```sql
-SELECT DATE_ADD('2025-01-15', INTERVAL 10 DAY);
-SELECT DATE_SUB('2025-01-15', INTERVAL 5 DAY);
-```
-
-```sql
-SELECT DATEDIFF('2025-02-10', '2025-01-15');
-```
-
-```sql
-SELECT EXTRACT(YEAR FROM '2025-01-15');
-```
-
-```sql
-SELECT DATE_FORMAT('2025-01-15', '%d-%m-%Y');
-```
-
-```sql
-SELECT TIMESTAMPDIFF(YEAR, '2000-01-01', '2025-01-01');
-```
-
----
-
-## 4. Conversion / Type Casting
-These functions convert one type of data into another.
-
-### When to use
-- Convert text to number before comparison.
-- Convert number to text for display.
-- Convert date strings into proper database date values.
-
-### Examples
-```sql
-SELECT CAST(123 AS VARCHAR(10));
-```
-
-```sql
-SELECT CONVERT(VARCHAR, 123);
-```
-
-```sql
-SELECT TO_CHAR(CURRENT_DATE, 'YYYY-MM-DD');
-```
-
-```sql
-SELECT STR_TO_DATE('15-01-2025', '%d-%m-%Y');
-```
-
----
-
-## 5. NULL Handling Functions
-These help manage missing values.
-
-### When to use
-- Replace missing phone numbers with a default value.
-- Avoid errors when a value is null.
-- Provide user-friendly output.
-
-### Examples
-```sql
-SELECT COALESCE(phone, 'No Phone')
-FROM customers;
-```
-
-```sql
-SELECT NULLIF(10, 10);
-```
-
-```sql
-SELECT IFNULL(phone, 'Missing');
-```
-
----
-
-## 6. Conditional Functions
-Used to return different values depending on a condition.
-
-### When to use
-- Label data as high/low salary.
-- Classify products as expensive or cheap.
-- Apply business logic in reports.
 
 ### Example
 ```sql
-SELECT customer_name,
-       CASE
-           WHEN city = 'Hyderabad' THEN 'Local'
-           ELSE 'Other'
-       END AS location_type
+SELECT customer_name, email
 FROM customers;
 ```
 
-### IF function
+### Select all columns
 ```sql
-SELECT IF(price > 1000, 'Expensive', 'Cheap')
+SELECT *
+FROM customers;
+```
+
+---
+
+## 2. Aliases
+Aliases give a temporary name to a column or table to make the result easier to read.
+
+### When to use
+- Results need a cleaner display name.
+- A calculated result needs a business-friendly label.
+- You want shorter names in queries.
+
+### Example
+```sql
+SELECT customer_name AS name, email AS email_id
+FROM customers;
+```
+
+```sql
+SELECT price * quantity AS total_value
 FROM products;
 ```
 
 ---
 
-## 7. Use of Functions in Real Queries
+## 3. DISTINCT
+DISTINCT removes duplicate rows from the result set.
 
-### Example 1: Format customer names
+### When to use
+- You want to list unique values only.
+- You want to avoid repeated records in reports.
+- You want to count unique values.
+
+### Example
 ```sql
-SELECT UPPER(customer_name)
+SELECT DISTINCT city
 FROM customers;
 ```
 
-### Example 2: Combine names
+### Count unique values
 ```sql
-SELECT CONCAT(first_name, ' ', last_name) AS full_name
-FROM employees;
+SELECT COUNT(DISTINCT city)
+FROM customers;
 ```
 
-### Example 3: Find orders in the last 30 days
+---
+
+## 4. WHERE Clause
+WHERE filters the rows before they are displayed.
+
+### When to use
+- You want only active customers.
+- You want records for a particular city.
+- You want to remove rows that do not match business rules.
+
+### Example
 ```sql
 SELECT *
-FROM orders
-WHERE order_date >= DATE_SUB(CURRENT_DATE, INTERVAL 30 DAY);
+FROM customers
+WHERE city = 'Hyderabad';
 ```
 
-### Example 4: Replace missing values
+---
+
+## 5. Comparison Operators
+These compare values and help filter records.
+
+### Operators
+- `=` equal to
+- `!=` or `<>` not equal to
+- `>` greater than
+- `<` less than
+- `>=` greater than or equal to
+- `<=` less than or equal to
+
+### When to use
+- Compare a value to a literal number or text.
+- Filter products with price more than 5000.
+- Find customers who are not from Delhi.
+
+### Examples
 ```sql
-SELECT COALESCE(phone, 'N/A')
-FROM customers;
+SELECT *
+FROM products
+WHERE price > 5000;
+```
+
+```sql
+SELECT *
+FROM customers
+WHERE city != 'Delhi';
 ```
 
 ---
 
-## 8. Important Rules
-- Function syntax differs between databases.
-- Data type conversion must be done carefully.
-- Date functions vary across SQL databases.
-- Use `COALESCE` when missing values must be handled.
-- Use `CASE` for custom business rules.
+## 6. Logical Operators
+Logical operators combine multiple conditions.
+
+### AND
+Use when all conditions must be true.
+
+```sql
+SELECT *
+FROM customers
+WHERE city = 'Hyderabad' AND status = 'Active';
+```
+
+### OR
+Use when any one condition can be true.
+
+```sql
+SELECT *
+FROM customers
+WHERE city = 'Hyderabad' OR city = 'Bengaluru';
+```
+
+### NOT
+Use to reverse a condition.
+
+```sql
+SELECT *
+FROM customers
+WHERE NOT status = 'Inactive';
+```
+
+### When to use
+- Use AND when you need stricter filtering.
+- Use OR when you want records matching one of several values.
+- Use NOT when excluding rows from a result.
+
+### Parentheses example
+```sql
+SELECT *
+FROM products
+WHERE (category = 'Electronics' OR category = 'Furniture')
+AND price > 1000;
+```
 
 ---
 
-## 9. Common Practice Questions
-1. What is the difference between `CONCAT` and `CONCAT_WS`?
-2. Why do we use `COALESCE`?
-3. How do you convert text to date?
-4. Which function extracts the month from a date?
-5. How do you convert all names to uppercase?
-6. What is the purpose of `CASE`?
-7. Why is `CAST` useful?
-8. What happens when `NULLIF` receives equal values?
+## 7. BETWEEN and NOT BETWEEN
+BETWEEN checks if a value is within a range.
+
+### When to use
+- Find amounts between two values.
+- Check date ranges.
+- Filter numeric values inside a range.
+
+### Example
+```sql
+SELECT *
+FROM products
+WHERE price BETWEEN 500 AND 2000;
+```
+
+### Not between
+```sql
+SELECT *
+FROM products
+WHERE price NOT BETWEEN 500 AND 2000;
+```
+
+---
+
+## 8. IN and NOT IN
+IN checks whether a value matches any value in a list.
+
+### When to use
+- Filter by several known values.
+- Replace long OR conditions.
+- Compare city, status, category, department, etc.
+
+### Example
+```sql
+SELECT *
+FROM customers
+WHERE city IN ('Hyderabad', 'Pune', 'Bengaluru');
+```
+
+```sql
+SELECT *
+FROM customers
+WHERE city NOT IN ('Delhi', 'Mumbai');
+```
+
+---
+
+## 9. LIKE and Pattern Matching
+LIKE is used for text matching with wildcards.
+
+### Wildcards
+- `%` = any number of characters
+- `_` = one single character
+
+### When to use
+- Find names beginning with a letter.
+- Search text like email, product codes, names.
+- Match partial text values.
+
+### Examples
+```sql
+SELECT *
+FROM customers
+WHERE customer_name LIKE 'A%';
+```
+
+This returns names starting with A.
+
+```sql
+SELECT *
+FROM customers
+WHERE customer_name LIKE '%sh%';
+```
+
+This returns names containing "sh".
+
+```sql
+SELECT *
+FROM customers
+WHERE customer_name LIKE 'A_';
+```
+
+This returns names of exactly 2 characters starting with A.
+
+### NOT LIKE
+```sql
+SELECT *
+FROM customers
+WHERE customer_name NOT LIKE 'A%';
+```
+
+---
+
+## 10. NULL Filtering
+NULL means the value is missing or unknown.
+
+### Important
+Do not use `= NULL`.
+Use `IS NULL` or `IS NOT NULL`.
+
+### When to use
+- Check if phone number is missing.
+- Find rows where a field is not entered.
+- Handle incomplete records.
+
+### Examples
+```sql
+SELECT *
+FROM customers
+WHERE phone IS NULL;
+```
+
+```sql
+SELECT *
+FROM customers
+WHERE phone IS NOT NULL;
+```
+
+---
+
+## 11. Main WHERE Filter Types Summary
+The most common filters used in WHERE are:
+
+- Comparison filters: `=`, `>`, `<`, `>=`, `<=`, `!=`
+- Logical filters: `AND`, `OR`, `NOT`
+- Range filters: `BETWEEN`, `NOT BETWEEN`
+- List filters: `IN`, `NOT IN`
+- Pattern filters: `LIKE`, `NOT LIKE`
+- Null checks: `IS NULL`, `IS NOT NULL`
+
+---
+
+## 12. When to Use Which Filter?
+
+### Use `=` when
+- You know the exact value.
+```sql
+WHERE city = 'Hyderabad';
+```
+
+### Use `BETWEEN` when
+- You need a range of values.
+```sql
+WHERE price BETWEEN 1000 AND 5000;
+```
+
+### Use `IN` when
+- You need a list of allowed values.
+```sql
+WHERE city IN ('Hyderabad', 'Pune', 'Bengaluru');
+```
+
+### Use `LIKE` when
+- You need partial matching or pattern matching.
+```sql
+WHERE customer_name LIKE 'A%';
+```
+
+### Use `IS NULL` when
+- You want to find missing values.
+```sql
+WHERE phone IS NULL;
+```
+
+### Use `AND` when
+- Multiple conditions must all be true.
+```sql
+WHERE city = 'Hyderabad' AND status = 'Active';
+```
+
+### Use `OR` when
+- Any one of multiple conditions is acceptable.
+```sql
+WHERE city = 'Hyderabad' OR city = 'Pune';
+```
+
+---
+
+## 13. Best Practices
+- Use `WHERE` to reduce the number of rows returned.
+- Use parentheses in complex conditions for clarity.
+- Never use `= NULL`; always use `IS NULL`.
+- Use `IN` instead of many OR conditions when possible.
+- Use `LIKE` only when pattern matching is required.
+
+---
+
+## 14. Example Combined Query
+```sql
+SELECT customer_name, city, status
+FROM customers
+WHERE city IN ('Hyderabad', 'Bengaluru')
+AND status = 'Active'
+AND phone IS NOT NULL;
+```
+
+This query finds active customers from Hyderabad or Bengaluru who have a phone number.
 
 ---
 
 ## Summary
-SQL functions help transform, clean, compare, and report data. They are essential for real-world databases because raw data is rarely ready to be displayed directly.
+SELECT reads data, DISTINCT removes duplicates, and WHERE filters the rows you need. Understanding the different filter types is essential for writing accurate SQL queries.
+
+---
+
+## Interview Questions
+1. What is the purpose of WHERE?
+2. Why is DISTINCT important?
+3. Why is `IS NULL` used instead of `= NULL`?
+4. When would you use `IN` instead of OR?
+5. What is the difference between `BETWEEN` and `IN`?
+6. How is `LIKE` different from `=`?
+7. When is `AND` preferred over `OR`?
+8. Why do we use parentheses in complex conditions?
 
 

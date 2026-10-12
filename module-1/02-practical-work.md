@@ -1,433 +1,700 @@
-# Module 1: Practical Work
+# Module 1: SQL Fundamentals - DDL & DML Basics
 
-## Objective
-Apply all major SQL concepts from this module by creating a realistic business database and performing the required operations carefully.
+## Purpose
 
----
-
-## Practice Scenario: Online Store Database
-
-### Business Need
-You are creating a database for an online store that manages:
-- Products
-- Customers
-- Orders
-- Temporary data for testing
-- Backup tables for safe changes
+This module introduces the core concepts of database design and data manipulation. You will learn how to create databases and tables, insert and modify data, and understand the lifecycle of database objects.
 
 ---
 
-## Task 1: Create a Database
-- Create a new database for the online store.
-- Choose a meaningful database name.
-- Switch to the new database before creating tables.
+## Sample Practice Data for This Module
 
-**What you should understand:**
-- Databases are containers for related data.
-- All tables in the system should be created inside the selected database.
+Before practicing any DDL or DML commands, use this small sample setup.
 
----
+```sql
+CREATE DATABASE ecommerce_db;
+USE ecommerce_db;
 
-## Task 2: Create a Products Table
-Create a products table with the following requirements:
+CREATE TABLE customers (
+    customer_id INT PRIMARY KEY,
+    customer_name VARCHAR(100) NOT NULL,
+    email VARCHAR(255) UNIQUE,
+    city VARCHAR(50),
+    phone VARCHAR(20),
+    is_active BOOLEAN DEFAULT TRUE
+);
 
-**Add the following columns:**
-- Unique product identifier
-- Product name
-- Category
-- Price
-- Quantity in stock
-- Product active status
-- Discount percentage
-- Date the product was added
+CREATE TABLE products (
+    product_id INT PRIMARY KEY,
+    product_name VARCHAR(100) NOT NULL,
+    category VARCHAR(50),
+    price DECIMAL(10,2) NOT NULL CHECK (price > 0),
+    stock_quantity INT DEFAULT 0,
+    is_available BOOLEAN DEFAULT TRUE
+);
 
-**Apply the following constraints:**
-- Primary key on the product ID
-- Required values where necessary
-- Default value for stock quantity
-- Default value for active status
-- Price must be positive
-- Quantity must not be negative
+CREATE TABLE orders (
+    order_id INT PRIMARY KEY,
+    customer_id INT NOT NULL,
+    order_date DATE,
+    total_amount DECIMAL(10,2) CHECK (total_amount > 0),
+    order_status VARCHAR(20) DEFAULT 'Pending',
+    FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
+);
 
-**What you should understand:**
-- Tables should reflect real business data
-- Constraints protect the quality of the data
-- Data types must match the kind of information being stored
+INSERT INTO customers (customer_id, customer_name, email, city, phone, is_active) VALUES
+(1, 'Rahul Kumar', 'rahul@email.com', 'Hyderabad', '9876543210', TRUE),
+(2, 'Neha Singh', 'neha@email.com', 'Chennai', '9123456789', TRUE),
+(3, 'Kiran Patel', 'kiran@email.com', 'Bengaluru', NULL, FALSE),
+(4, 'Amit Sharma', 'amit@email.com', 'Delhi', '9988776655', TRUE);
 
----
+INSERT INTO products (product_id, product_name, category, price, stock_quantity, is_available) VALUES
+(101, 'Laptop', 'Electronics', 45000.00, 12, TRUE),
+(102, 'Mobile', 'Electronics', 25000.00, 25, TRUE),
+(103, 'Chair', 'Furniture', 2500.00, 30, TRUE),
+(104, 'Desk', 'Furniture', 5000.00, 8, FALSE),
+(105, 'Keyboard', 'Electronics', 1200.00, 40, TRUE);
 
-## Task 3: Create Customers Table
-Create a customers table with these requirements:
+INSERT INTO orders (order_id, customer_id, order_date, total_amount, order_status) VALUES
+(1, 1, '2024-01-12', 45000.00, 'Delivered'),
+(2, 2, '2024-01-20', 25000.00, 'Processing'),
+(3, 1, '2024-02-02', 5000.00, 'Shipped'),
+(4, 4, '2024-02-15', 1200.00, 'Pending');
+```
 
-**Columns:**
-- Customer ID
-- Full name
-- Email
-- Phone number
-- City
-- Registration date
-- Active status
-
-**Constraints:**
-- Primary key
-- Required fields
-- Unique email
-- Default value for active status
-- Default value for registration date
-
-**What you should understand:**
-- Why email should be unique
-- Why some fields must be required
-- How defaults reduce manual work
+This sample data will be used throughout the module to explain database design, constraints, inserts, updates, and deletions.
 
 ---
 
-## Task 4: Create Orders Table
-Create an orders table that links customers and purchases.
+## 1. Database and Schema Basics
 
-**Columns:**
-- Order ID
-- Customer ID
-- Order date
-- Total amount
-- Order status
-- Expected delivery date
+### What is a Database?
+A database is an organized collection of structured data stored electronically on a computer system.
 
-**Constraints:**
-- Primary key
-- Foreign key to customers
-- Required values where needed
-- Positive total amount
+Examples:
+- Student management database
+- E-commerce database
+- Bank account database
+- Hospital patient database
 
-**What you should understand:**
-- Foreign keys connect business entities
-- Orders should belong to valid customers
-- Relationships improve data integrity
+### What is a Schema?
+A schema is the blueprint or structure that defines:
+- What tables exist
+- What columns are in each table
+- What data types each column holds
+- What relationships exist between tables
 
----
+### What is a Table?
+A table is a structured collection of data organized in rows and columns, similar to a spreadsheet.
 
-## Task 5: Insert a Single Product
-Insert one product record into the products table.
+Example:
 
-**Use a realistic product such as:**
-- Laptop
-- Phone
-- Headphones
-- Chair
-- Monitor
+| customer_id | customer_name | city      | email               |
+|-------------|---------------|-----------|---------------------|
+| 1           | Rahul         | Hyderabad | rahul@email.com     |
+| 2           | Neha          | Chennai   | neha@email.com      |
+| 3           | Kiran         | Bangalore | kiran@email.com     |
 
-**Requirements:**
-- Provide values for all required fields
-- Use realistic price, category, and stock
-
-**What you should understand:**
-- How single row inserts work
-- The importance of required columns
-- The difference between required and optional fields
+- Each row represents one record
+- Each column represents one attribute
+- Rows and columns together form the table structure
 
 ---
 
-## Task 6: Insert Multiple Products
-Insert several products at once.
+## 2. Table Structure Concepts
 
-**Requirements:**
-- Add at least 5 products
-- Include at least 3 different categories
-- Some rows may omit optional fields
-- Some rows should use default values
-- Include one product with a discount value
+### Components of a Table
 
-**What you should understand:**
-- Multiple insert statements save time
-- Optional columns may be left empty
-- Defaults are used automatically when values are missing
+#### Row
+One complete record in a table.
 
----
+Example:
+```
+(1, Rahul, Hyderabad, rahul@email.com)
+```
 
-## Task 7: Insert Customers
-Insert at least 4 customer records.
+#### Column
+A property or attribute.
 
-**Requirements:**
-- Provide realistic names and email values
-- At least one customer should have a missing phone number
-- Ensure email values are unique
-- Use different cities
+Example:
+```
+customer_name
+```
 
-**What you should understand:**
-- Unique constraints prevent duplicate email values
-- Optional fields may be left blank
-- Real business systems often have incomplete or missing optional data
+#### Field
+The value at the intersection of a row and column.
 
----
+Example:
+```
+Rahul
+```
 
-## Task 8: Insert Orders
-Insert at least 3 order records.
+#### Record
+One complete row of data.
 
-**Requirements:**
-- Each order must reference an existing customer
-- Include realistic dates
-- Include realistic order totals and status
-- Each order should satisfy all constraints
+### Why Structure Matters
 
-**What you should understand:**
-- Foreign keys ensure valid relationships
-- Table linking is essential in relational databases
+Good table structure ensures:
+- Data consistency
+- Data integrity
+- Efficient querying
+- Reliable reporting
+- Easy maintenance
 
 ---
 
-## Task 9: Update a Single Product
-Update one product record.
+## 3. Data Types
 
-**Scenario:**
-You need to increase or decrease the price of a product due to a sale.
+Choosing the correct data type is crucial. It ensures data is stored correctly and queries run efficiently.
 
-**Tasks:**
-- Choose one product
-- Change only the relevant field
-- Use a condition to target the correct row
-- Verify that only that product changed
+### Integer Types
+Used for whole numbers.
 
-**What you should understand:**
-- UPDATE works on rows that match a condition
-- WHERE is necessary to avoid changing every row
-- Single row updates are common in real systems
+- `INT` or `INTEGER`: standard integer
+- `SMALLINT`: smaller range
+- `BIGINT`: larger range
 
----
+Example:
+```sql
+customer_id INT
+product_id INT
+age SMALLINT
+```
 
-## Task 10: Update Multiple Products
-Update several products at once.
+### Decimal Types
+Used for numbers with decimal places, especially money.
 
-**Scenario:**
-All electronics products need a product price adjustment.
+- `DECIMAL(p,s)` or `NUMERIC(p,s)`
+  - p = total digits
+  - s = digits after decimal point
 
-**Tasks:**
-- Identify products in a specific category
-- Update the price or discount for all matching products
-- Verify the number of rows affected
+Example:
+```sql
+price DECIMAL(10,2)        -- Up to 99,999,999.99
+discount DECIMAL(5,2)      -- Up to 999.99
+```
 
-**What you should understand:**
-- UPDATE can affect many rows at once
-- Conditions determine which records change
-- Data updates should be carefully reviewed
+### String Types
+Used for text data.
 
----
+- `CHAR(n)`: fixed-length string
+- `VARCHAR(n)`: variable-length string
+- `TEXT`: long text (varies by system)
 
-## Task 11: Update Multiple Columns
-Update one customer record with multiple values.
+Example:
+```sql
+customer_name VARCHAR(100)
+email VARCHAR(255)
+description TEXT
+```
 
-**Scenario:**
-A customer changed their phone number and moved to another city.
+### Date and Time Types
+Used for dates and timestamps.
 
-**Tasks:**
-- Modify the customer record
-- Update both phone number and city
-- Verify both values changed
+- `DATE`: only date (YYYY-MM-DD)
+- `TIME`: only time (HH:MM:SS)
+- `TIMESTAMP`: date and time together
 
-**What you should understand:**
-- Multiple columns can be updated in one statement
-- Several values can change for the same row
+Example:
+```sql
+birth_date DATE
+order_date DATE
+created_at TIMESTAMP
+last_updated TIMESTAMP
+```
 
----
+### Boolean Type
+Used for true/false values.
 
-## Task 12: Delete One Record
-Delete a specific product or customer.
+- `BOOLEAN` or `BOOL`
 
-**Scenario:**
-A product is discontinued, or a customer record is being removed from the system.
+Example:
+```sql
+is_active BOOLEAN
+is_premium BOOLEAN
+```
 
-**Tasks:**
-- Decide which row to delete
-- Use a condition to target only the selected record
-- Verify the record is gone
+### Choosing the Right Data Type
 
-**What you should understand:**
-- DELETE removes rows from a table
-- WHERE is critical for safety
-- Always confirm what is being removed before executing
-
----
-
-## Task 13: Delete Multiple Records
-Delete multiple rows using one condition.
-
-**Scenario:**
-Remove inactive or obsolete records based on a condition.
-
-**Tasks:**
-- Select rows matching a common condition
-- Delete all matching records
-- Verify how many rows were removed
-
-**What you should understand:**
-- DELETE can remove more than one row
-- Conditional deletion is common in maintenance work
+| Data | Suitable Type |
+|------|---------------|
+| Customer ID | INT |
+| Product Price | DECIMAL(10,2) |
+| Customer Name | VARCHAR(100) |
+| Order Date | DATE |
+| Is Active | BOOLEAN |
+| Account Balance | DECIMAL(15,2) |
+| Phone Number | VARCHAR(20) |
+| Email | VARCHAR(255) |
 
 ---
 
-## Task 14: Alter Table - Add a Column
-Add a new column to the products table.
+## 4. CREATE DATABASE
 
-**Scenario:**
-The store wants to track supplier information.
+A database is a container that holds multiple tables.
 
-**Tasks:**
-- Add a supplier name column
-- Choose an appropriate data type
-- Decide whether it should allow NULL values
-- Verify the new column exists
+### Syntax
+```sql
+CREATE DATABASE database_name;
+```
 
-**What you should understand:**
-- ALTER TABLE adjusts an existing structure
-- New columns are added without deleting table data
-- Good design often changes over time
+### Example
+```sql
+CREATE DATABASE ecommerce_db;
+```
 
----
+### Use the Database
+Before creating tables, you must select the database:
 
-## Task 15: Alter Table - Remove a Column
-Remove a column that is no longer needed.
+```sql
+USE ecommerce_db;
+```
 
-**Scenario:**
-A temporary or unused field should be removed.
+Some systems use:
+```sql
+SELECT ecommerce_db;
+```
 
-**Tasks:**
-- Drop an unnecessary column
-- Verify the table still works after the change
-- Check whether any data risk is created
+Or:
+```sql
+SET DATABASE ecommerce_db;
+```
 
-**What you should understand:**
-- Dropping columns is a structural change
-- Structural changes should be planned carefully
-
----
-
-## Task 16: Alter Table - Rename a Column
-Rename a column in one of the tables.
-
-**Scenario:**
-A column name should be clearer for business users.
-
-**Tasks:**
-- Rename a column to a clearer name
-- Ensure the new name is meaningful
-- Verify the table still works correctly
-
-**What you should understand:**
-- Column names affect readability and maintenance
-- Renaming does not change the data itself
+### Important Notes
+- Database name should be meaningful
+- Use lowercase and underscores for clarity
+- Each database is separate
+- Multiple databases can exist on one server
 
 ---
 
-## Task 17: Alter Table - Change Data Type
-Modify the data type of an existing column.
+## 5. CREATE TABLE with Constraints
 
-**Scenario:**
-A field needs to store a longer value than before.
+A table is created with columns and constraints that define the structure and rules.
 
-**Tasks:**
-- Change the data type of a relevant column
-- Choose a larger or more suitable type
-- Verify the change was applied correctly
+### Basic Syntax
+```sql
+CREATE TABLE table_name (
+    column1 data_type constraint,
+    column2 data_type constraint,
+    column3 data_type constraint
+);
+```
 
-**What you should understand:**
-- Data type selection matters from the beginning
-- Some schema changes require updates to existing design
+### Simple Example
+```sql
+CREATE TABLE customers (
+    customer_id INT PRIMARY KEY,
+    customer_name VARCHAR(100) NOT NULL,
+    email VARCHAR(255),
+    city VARCHAR(50)
+);
+```
 
----
+### Example with Multiple Constraints
+```sql
+CREATE TABLE products (
+    product_id INT PRIMARY KEY,
+    product_name VARCHAR(100) NOT NULL,
+    category VARCHAR(50),
+    price DECIMAL(10,2) NOT NULL,
+    stock_quantity INT DEFAULT 0
+);
+```
 
-## Task 18: Understand DELETE vs TRUNCATE
-Create a backup/test table and compare operations.
-
-**Tasks:**
-- Create a copy of one table for testing
-- Remove selected records using DELETE
-- Create another copy and clear all records using TRUNCATE
-- Compare the effects on the table and the data
-
-**What you should understand:**
-- DELETE is row-based and conditional
-- TRUNCATE removes all rows quickly
-- The table structure remains in both cases
-
----
-
-## Task 19: Understand DROP
-Remove an entire table that is no longer needed.
-
-**Tasks:**
-- Create a test table
-- Insert sample data
-- Drop the table
-- Try to access it later and note the result
-
-**What you should understand:**
-- DROP removes the entire table object
-- A dropped table is no longer available
-- Always make backups before dropping tables
+### Structure Breakdown
+- `product_id INT PRIMARY KEY` — unique identifier
+- `product_name VARCHAR(100) NOT NULL` — required text field
+- `category VARCHAR(50)` — optional text field
+- `price DECIMAL(10,2) NOT NULL` — required money field
+- `stock_quantity INT DEFAULT 0` — defaults to 0 if not provided
 
 ---
 
-## Task 20: Create a Temporary Table
-Use a temporary table for testing or intermediate work.
+## 6. PRIMARY KEY and FOREIGN KEY
 
-**Scenario:**
-You need to create a temporary list of products for review before finalizing changes.
+### Primary Key
+A primary key uniquely identifies each row in a table. No two rows can have the same primary key value.
 
-**Tasks:**
-- Create a temporary table
-- Insert a few records
-- Query the table
-- Note how it behaves compared to normal tables
+#### Rules for Primary Key
+- Must be unique
+- Cannot be NULL
+- Only one primary key per table
+- Usually numeric (INT, BIGINT)
 
-**What you should understand:**
-- Temporary tables are useful for intermediate processing
-- They help avoid changing permanent tables during testing
+#### Example
+```sql
+CREATE TABLE customers (
+    customer_id INT PRIMARY KEY,
+    customer_name VARCHAR(100),
+    email VARCHAR(255)
+);
+```
+
+Here, `customer_id` is the primary key. Each customer has a unique ID.
+
+### Foreign Key
+A foreign key links one table to another. It creates a relationship between tables.
+
+#### Rules for Foreign Key
+- References the primary key of another table
+- Ensures referential integrity
+- Prevents orphaned records
+- Can be NULL if not required
+
+#### Example
+```sql
+CREATE TABLE orders (
+    order_id INT PRIMARY KEY,
+    customer_id INT,
+    order_date DATE,
+    FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
+);
+```
+
+Here, `customer_id` in orders table references `customer_id` in customers table.
+
+This means:
+- Each order belongs to a valid customer
+- You cannot create an order for a non-existent customer
+- Data integrity is maintained
+
+#### Complete Example with Both Keys
+```sql
+CREATE TABLE customers (
+    customer_id INT PRIMARY KEY,
+    customer_name VARCHAR(100) NOT NULL,
+    email VARCHAR(255)
+);
+
+CREATE TABLE orders (
+    order_id INT PRIMARY KEY,
+    customer_id INT NOT NULL,
+    order_date DATE,
+    total_amount DECIMAL(10,2),
+    FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
+);
+```
 
 ---
 
-## Task 21: Clone a Table
-Create a backup or clone of a table before making changes.
+## 7. Constraints - Types and Uses
 
-**Tasks:**
-- Create a copy of one of your tables
-- Use a meaningful backup table name
-- Verify both tables contain the same data
-- Make schema changes on one table while keeping the other unchanged
+Constraints are rules that control what data can be stored in a table.
 
-**What you should understand:**
-- Cloning helps test changes safely
-- Backups reduce the risk of accidental loss
-- Testing should happen before production changes
+### NOT NULL Constraint
+Ensures a column must always have a value.
+
+```sql
+CREATE TABLE employees (
+    emp_id INT PRIMARY KEY,
+    emp_name VARCHAR(100) NOT NULL,
+    email VARCHAR(255) NOT NULL
+);
+```
+
+Here, `emp_name` and `email` are required. You cannot insert a record without these values.
+
+### UNIQUE Constraint
+Ensures all values in a column are different.
+
+```sql
+CREATE TABLE users (
+    user_id INT PRIMARY KEY,
+    username VARCHAR(50) UNIQUE,
+    email VARCHAR(255) UNIQUE
+);
+```
+
+Here, no two users can have the same username or email.
+
+### DEFAULT Constraint
+Provides a default value if no value is provided.
+
+```sql
+CREATE TABLE products (
+    product_id INT PRIMARY KEY,
+    product_name VARCHAR(100),
+    is_available BOOLEAN DEFAULT TRUE,
+    discount_percent DECIMAL(5,2) DEFAULT 0.00
+);
+```
+
+If you don't specify `is_available`, it defaults to TRUE.
+If you don't specify `discount_percent`, it defaults to 0.00.
+
+### CHECK Constraint
+Restricts values to meet a condition.
+
+```sql
+CREATE TABLE orders (
+    order_id INT PRIMARY KEY,
+    quantity INT CHECK (quantity > 0),
+    price DECIMAL(10,2) CHECK (price > 0)
+);
+```
+
+Here:
+- `quantity` must be greater than 0
+- `price` must be greater than 0
+
+You cannot insert an order with negative quantity or price.
+
+### PRIMARY KEY Constraint
+Uniquely identifies each row.
+
+```sql
+CREATE TABLE customers (
+    customer_id INT PRIMARY KEY,
+    customer_name VARCHAR(100)
+);
+```
+
+### FOREIGN KEY Constraint
+Links to another table's primary key.
+
+```sql
+CREATE TABLE orders (
+    order_id INT PRIMARY KEY,
+    customer_id INT,
+    FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
+);
+```
+
+### Complete Example with All Constraints
+```sql
+CREATE TABLE students (
+    student_id INT PRIMARY KEY,
+    student_name VARCHAR(100) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    age INT CHECK (age >= 18),
+    is_active BOOLEAN DEFAULT TRUE
+);
+```
 
 ---
 
-## Task 22: Final Practice Review
-After completing all tasks, write a short summary explaining:
+## 8. INSERT Basics
 
-- Which tables you created
-- Which constraints you used
-- Which records were inserted or changed
-- Which columns were modified
-- Which operations were destructive
-- Which backup/testing methods you used
-- What you learned about SQL safety and design
+INSERT adds new records (rows) to a table.
+
+### Single Insert
+Insert one record at a time.
+
+#### Syntax
+```sql
+INSERT INTO table_name (column1, column2, column3)
+VALUES (value1, value2, value3);
+```
+
+#### Example
+```sql
+INSERT INTO customers (customer_id, customer_name, email, city)
+VALUES (1, 'Rahul Kumar', 'rahul@email.com', 'Hyderabad');
+```
+
+### Insert All Columns
+If you provide values for all columns, you can omit the column list.
+
+```sql
+INSERT INTO customers
+VALUES (2, 'Neha Singh', 'neha@email.com', 'Chennai');
+```
+
+### Insert Selected Columns
+If some columns are optional or have defaults, you can insert only specific columns.
+
+```sql
+INSERT INTO customers (customer_id, customer_name, email)
+VALUES (3, 'Kiran Patel', 'kiran@email.com');
+```
+
+Here, `city` is not provided. If it has no default, it will be NULL.
+
+### Multiple Inserts
+Insert multiple records in one statement.
+
+```sql
+INSERT INTO customers (customer_id, customer_name, email, city)
+VALUES
+(1, 'Rahul Kumar', 'rahul@email.com', 'Hyderabad'),
+(2, 'Neha Singh', 'neha@email.com', 'Chennai'),
+(3, 'Kiran Patel', 'kiran@email.com', 'Bangalore'),
+(4, 'Amit Sharma', 'amit@email.com', 'Delhi');
+```
+
+This is more efficient than single inserts.
+
+### Multiple Inserts with Different Columns
+You can insert different sets of columns in one statement (if supported).
+
+```sql
+INSERT INTO customers (customer_id, customer_name, email, city)
+VALUES
+(5, 'Priya Verma', 'priya@email.com', 'Pune'),
+(6, 'Rajesh Gupta', 'rajesh@email.com', NULL),
+(7, 'Meera Khan', 'meera@email.com', 'Lucknow');
+```
+
+Here, customer 6 has no city value (NULL).
+
+### Insert Data for Few Columns Only
+If columns are optional or have defaults, you don't need to provide all.
+
+```sql
+INSERT INTO products (product_id, product_name)
+VALUES (101, 'Laptop');
+```
+
+Here, only `product_id` and `product_name` are provided. Other columns will be NULL or use their defaults.
+
+Example with defaults:
+```sql
+CREATE TABLE inventory (
+    item_id INT PRIMARY KEY,
+    item_name VARCHAR(100) NOT NULL,
+    quantity INT DEFAULT 0,
+    is_available BOOLEAN DEFAULT TRUE
+);
+
+INSERT INTO inventory (item_id, item_name)
+VALUES (1, 'USB Cable');
+```
+
+This inserts a row where quantity becomes 0 and is_available becomes TRUE.
 
 ---
 
-## Reflection Questions
-Answer the following in your own words:
+## 9. UPDATE Basics
 
-1. Why is a primary key important?
-2. What is the purpose of a foreign key?
-3. Why should you use NOT NULL where required?
-4. What is the difference between DELETE and TRUNCATE?
-5. What is the difference between DELETE and DROP?
-6. Why do we use constraints?
-7. How do defaults reduce manual errors?
-8. Why should you test schema changes on a clone first?
-9. Why is UPDATE dangerous if you forget WHERE?
-10. Why are temporary tables useful in practice?
+UPDATE modifies existing rows.
+
+### Syntax
+```sql
+UPDATE table_name
+SET column1 = value1, column2 = value2
+WHERE condition;
+```
+
+### Example
+```sql
+UPDATE customers
+SET city = 'Hyderabad'
+WHERE customer_id = 2;
+```
+
+### Important
+- Without `WHERE`, all rows in the table would be updated.
+- Use conditions carefully.
+
+---
+
+## 10. DELETE Basics
+
+DELETE removes rows from a table.
+
+### Syntax
+```sql
+DELETE FROM table_name
+WHERE condition;
+```
+
+### Example
+```sql
+DELETE FROM customers
+WHERE customer_id = 3;
+```
+
+### Important
+- Without `WHERE`, all rows would be deleted.
+- Use backups before deleting records.
+
+---
+
+## 11. ALTER TABLE
+
+ALTER TABLE is used to add, modify, or remove columns.
+
+### Add a Column
+```sql
+ALTER TABLE customers
+ADD COLUMN last_login DATE;
+```
+
+### Rename a Column
+```sql
+ALTER TABLE customers
+RENAME COLUMN city TO residence_city;
+```
+
+### Change Data Type
+```sql
+ALTER TABLE customers
+ALTER COLUMN phone VARCHAR(25);
+```
+
+### Drop a Column
+```sql
+ALTER TABLE products
+DROP COLUMN discount_percent;
+```
+
+---
+
+## 12. DROP TABLE and TRUNCATE TABLE
+
+### TRUNCATE
+Removes all rows from a table but keeps the table structure.
+
+```sql
+TRUNCATE TABLE orders;
+```
+
+### DROP
+Removes the full table definition and data.
+
+```sql
+DROP TABLE orders;
+```
+
+### Difference
+- `TRUNCATE`: empties the table, keeps structure.
+- `DROP`: removes the table completely.
+
+---
+
+## 13. Temporary Tables and Clones
+
+### Temporary Table
+Useful for intermediate working data.
+
+```sql
+CREATE TEMPORARY TABLE temp_products AS
+SELECT * FROM products WHERE price > 2000;
+```
+
+### Clone / Backup Table
+```sql
+CREATE TABLE products_backup AS
+SELECT * FROM products;
+```
+
+This copies the table structure and data into a new table.
 
 ---
 
 ## Summary
-This practical work helps you understand how databases are created, structured, updated, and maintained in real-world systems. It covers all key topics in this module: creating tables, using constraints, inserting records, updating data, deleting records, altering structures, and managing table lifecycle safely.
+This module lays the foundation of database design and SQL manipulation. You now understand how to create databases, design tables, define constraints, insert data, and modify existing records safely.
+
+---
+
+## Interview Questions
+1. What is the difference between a database and a table?
+2. Why is a primary key important?
+3. When would you use a foreign key?
+4. What does NOT NULL do?
+5. Why is a CHECK constraint useful?
+6. What is the difference between INSERT and UPDATE?
+7. Why should you avoid DELETE without WHERE?
+8. What is the difference between TRUNCATE and DROP?
+
+

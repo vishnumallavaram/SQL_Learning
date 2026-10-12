@@ -1,388 +1,500 @@
-# Module 2 Part 1: SELECT, DISTINCT, and WHERE Filters
+# Module 1: Practical Work
 
 ## Objective
-Learn how to retrieve exact data using SELECT, remove duplicates with DISTINCT, and filter rows with WHERE conditions.
+Apply all major SQL concepts from this module by creating a realistic business database and performing the required operations carefully.
 
 ---
 
-## 1. SELECT Statement
-SELECT is used to read data from one or more columns in a table.
+## Sample Data Setup
 
-### When to use
-- You want to view only the columns you need.
-- You want to see all column values from a table.
-- You want to calculate values from columns.
+Use this setup first so all practical tasks have real data to work with.
 
-### Syntax
 ```sql
-SELECT column1, column2
-FROM table_name;
+CREATE DATABASE online_store_db;
+USE online_store_db;
+
+CREATE TABLE products (
+    product_id INT PRIMARY KEY,
+    product_name VARCHAR(100) NOT NULL,
+    category VARCHAR(50),
+    price DECIMAL(10,2) CHECK (price > 0),
+    stock_quantity INT DEFAULT 0 CHECK (stock_quantity >= 0),
+    is_active BOOLEAN DEFAULT TRUE,
+    discount_percent DECIMAL(5,2) DEFAULT 0.00,
+    added_date DATE DEFAULT CURRENT_DATE
+);
+
+CREATE TABLE customers (
+    customer_id INT PRIMARY KEY,
+    customer_name VARCHAR(100) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    phone VARCHAR(20),
+    city VARCHAR(50),
+    registration_date DATE DEFAULT CURRENT_DATE,
+    is_active BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE orders (
+    order_id INT PRIMARY KEY,
+    customer_id INT NOT NULL,
+    order_date DATE DEFAULT CURRENT_DATE,
+    total_amount DECIMAL(10,2) CHECK (total_amount > 0),
+    order_status VARCHAR(20) DEFAULT 'Pending',
+    expected_delivery_date DATE,
+    FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
+);
+
+INSERT INTO products (product_id, product_name, category, price, stock_quantity, is_active, discount_percent, added_date) VALUES
+(1, 'Laptop', 'Electronics', 45000.00, 12, TRUE, 5.00, '2024-01-10'),
+(2, 'Mobile', 'Electronics', 25000.00, 20, TRUE, 8.50, '2024-01-15'),
+(3, 'Chair', 'Furniture', 3500.00, 30, TRUE, 2.00, '2024-02-01'),
+(4, 'Table', 'Furniture', 6000.00, 10, FALSE, 0.00, '2024-02-05'),
+(5, 'Keyboard', 'Electronics', 1500.00, 40, TRUE, 10.00, '2024-02-12'),
+(6, 'Monitor', 'Electronics', 12000.00, 18, TRUE, 5.50, '2024-02-20');
+
+INSERT INTO customers (customer_id, customer_name, email, phone, city, registration_date, is_active) VALUES
+(1, 'Rahul Kumar', 'rahul@email.com', '9876543210', 'Hyderabad', '2024-01-05', TRUE),
+(2, 'Neha Singh', 'neha@email.com', '9123456789', 'Chennai', '2024-01-15', TRUE),
+(3, 'Kiran Patel', 'kiran@email.com', NULL, 'Bengaluru', '2024-02-01', FALSE),
+(4, 'Amit Sharma', 'amit@email.com', '9988776655', 'Delhi', '2024-02-10', TRUE),
+(5, 'Priya Verma', 'priya@email.com', '9000112233', 'Pune', '2024-02-15', TRUE);
+
+INSERT INTO orders (order_id, customer_id, order_date, total_amount, order_status, expected_delivery_date) VALUES
+(101, 1, '2024-01-20', 45000.00, 'Delivered', '2024-01-28'),
+(102, 2, '2024-02-02', 25000.00, 'Processing', '2024-02-12'),
+(103, 1, '2024-02-15', 3500.00, 'Shipped', '2024-02-25'),
+(104, 4, '2024-03-01', 12000.00, 'Delivered', '2024-03-09');
 ```
 
-### Example
-```sql
-SELECT customer_name, email
-FROM customers;
-```
-
-### Select all columns
-```sql
-SELECT *
-FROM customers;
-```
+This dataset is used for the rest of the practical tasks below.
 
 ---
 
-## 2. Aliases
-Aliases give a temporary name to a column or table to make the result easier to read.
+## Practice Scenario: Online Store Database
 
-### When to use
-- Results need a cleaner display name.
-- A calculated result needs a business-friendly label.
-- You want shorter names in queries.
-
-### Example
-```sql
-SELECT customer_name AS name, email AS email_id
-FROM customers;
-```
-
-```sql
-SELECT price * quantity AS total_value
-FROM products;
-```
+### Business Need
+You are creating a database for an online store that manages:
+- Products
+- Customers
+- Orders
+- Temporary data for testing
+- Backup tables for safe changes
 
 ---
 
-## 3. DISTINCT
-DISTINCT removes duplicate rows from the result set.
+## Task 1: Create a Database
+- Create a new database for the online store.
+- Choose a meaningful database name.
+- Switch to the new database before creating tables.
 
-### When to use
-- You want to list unique values only.
-- You want to avoid repeated records in reports.
-- You want to count unique values.
-
-### Example
-```sql
-SELECT DISTINCT city
-FROM customers;
-```
-
-### Count unique values
-```sql
-SELECT COUNT(DISTINCT city)
-FROM customers;
-```
+**What you should understand:**
+- Databases are containers for related data.
+- All tables in the system should be created inside the selected database.
 
 ---
 
-## 4. WHERE Clause
-WHERE filters the rows before they are displayed.
+## Task 2: Create a Products Table
+Create a products table with the following requirements:
 
-### When to use
-- You want only active customers.
-- You want records for a particular city.
-- You want to remove rows that do not match business rules.
+**Add the following columns:**
+- Unique product identifier
+- Product name
+- Category
+- Price
+- Quantity in stock
+- Product active status
+- Discount percentage
+- Date the product was added
 
-### Example
-```sql
-SELECT *
-FROM customers
-WHERE city = 'Hyderabad';
-```
+**Apply the following constraints:**
+- Primary key on the product ID
+- Required values where necessary
+- Default value for stock quantity
+- Default value for active status
+- Price must be positive
+- Quantity must not be negative
 
----
-
-## 5. Comparison Operators
-These compare values and help filter records.
-
-### Operators
-- `=` equal to
-- `!=` or `<>` not equal to
-- `>` greater than
-- `<` less than
-- `>=` greater than or equal to
-- `<=` less than or equal to
-
-### When to use
-- Compare a value to a literal number or text.
-- Filter products with price more than 5000.
-- Find customers who are not from Delhi.
-
-### Examples
-```sql
-SELECT *
-FROM products
-WHERE price > 5000;
-```
-
-```sql
-SELECT *
-FROM customers
-WHERE city != 'Delhi';
-```
+**What you should understand:**
+- Tables should reflect real business data
+- Constraints protect the quality of the data
+- Data types must match the kind of information being stored
 
 ---
 
-## 6. Logical Operators
-Logical operators combine multiple conditions.
+## Task 3: Create Customers Table
+Create a customers table with these requirements:
 
-### AND
-Use when all conditions must be true.
+**Columns:**
+- Customer ID
+- Full name
+- Email
+- Phone number
+- City
+- Registration date
+- Active status
 
-```sql
-SELECT *
-FROM customers
-WHERE city = 'Hyderabad' AND status = 'Active';
-```
+**Constraints:**
+- Primary key
+- Required fields
+- Unique email
+- Default value for active status
+- Default value for registration date
 
-### OR
-Use when any one condition can be true.
-
-```sql
-SELECT *
-FROM customers
-WHERE city = 'Hyderabad' OR city = 'Bengaluru';
-```
-
-### NOT
-Use to reverse a condition.
-
-```sql
-SELECT *
-FROM customers
-WHERE NOT status = 'Inactive';
-```
-
-### When to use
-- Use AND when you need stricter filtering.
-- Use OR when you want records matching one of several values.
-- Use NOT when excluding rows from a result.
-
-### Parentheses example
-```sql
-SELECT *
-FROM products
-WHERE (category = 'Electronics' OR category = 'Furniture')
-AND price > 1000;
-```
+**What you should understand:**
+- Why email should be unique
+- Why some fields must be required
+- How defaults reduce manual work
 
 ---
 
-## 7. BETWEEN and NOT BETWEEN
-BETWEEN checks if a value is within a range.
+## Task 4: Create Orders Table
+Create an orders table that links customers and purchases.
 
-### When to use
-- Find amounts between two values.
-- Check date ranges.
-- Filter numeric values inside a range.
+**Columns:**
+- Order ID
+- Customer ID
+- Order date
+- Total amount
+- Order status
+- Expected delivery date
 
-### Example
-```sql
-SELECT *
-FROM products
-WHERE price BETWEEN 500 AND 2000;
-```
+**Constraints:**
+- Primary key
+- Foreign key to customers
+- Required values where needed
+- Positive total amount
 
-### Not between
-```sql
-SELECT *
-FROM products
-WHERE price NOT BETWEEN 500 AND 2000;
-```
-
----
-
-## 8. IN and NOT IN
-IN checks whether a value matches any value in a list.
-
-### When to use
-- Filter by several known values.
-- Replace long OR conditions.
-- Compare city, status, category, department, etc.
-
-### Example
-```sql
-SELECT *
-FROM customers
-WHERE city IN ('Hyderabad', 'Pune', 'Bengaluru');
-```
-
-```sql
-SELECT *
-FROM customers
-WHERE city NOT IN ('Delhi', 'Mumbai');
-```
+**What you should understand:**
+- Foreign keys connect business entities
+- Orders should belong to valid customers
+- Relationships improve data integrity
 
 ---
 
-## 9. LIKE and Pattern Matching
-LIKE is used for text matching with wildcards.
+## Task 5: Insert a Single Product
+Insert one product record into the products table.
 
-### Wildcards
-- `%` = any number of characters
-- `_` = one single character
+**Use a realistic product such as:**
+- Laptop
+- Phone
+- Headphones
+- Chair
+- Monitor
 
-### When to use
-- Find names beginning with a letter.
-- Search text like email, product codes, names.
-- Match partial text values.
+**Requirements:**
+- Provide values for all required fields
+- Use realistic price, category, and stock
 
-### Examples
-```sql
-SELECT *
-FROM customers
-WHERE customer_name LIKE 'A%';
-```
-
-This returns names starting with A.
-
-```sql
-SELECT *
-FROM customers
-WHERE customer_name LIKE '%sh%';
-```
-
-This returns names containing "sh".
-
-```sql
-SELECT *
-FROM customers
-WHERE customer_name LIKE 'A_';
-```
-
-This returns names of exactly 2 characters starting with A.
-
-### NOT LIKE
-```sql
-SELECT *
-FROM customers
-WHERE customer_name NOT LIKE 'A%';
-```
+**What you should understand:**
+- How single row inserts work
+- The importance of required columns
+- The difference between required and optional fields
 
 ---
 
-## 10. NULL Filtering
-NULL means the value is missing or unknown.
+## Task 6: Insert Multiple Products
+Insert several products at once.
 
-### Important
-Do not use `= NULL`.
-Use `IS NULL` or `IS NOT NULL`.
+**Requirements:**
+- Add at least 5 products
+- Include at least 3 different categories
+- Some rows may omit optional fields
+- Some rows should use default values
+- Include one product with a discount value
 
-### When to use
-- Check if phone number is missing.
-- Find rows where a field is not entered.
-- Handle incomplete records.
-
-### Examples
-```sql
-SELECT *
-FROM customers
-WHERE phone IS NULL;
-```
-
-```sql
-SELECT *
-FROM customers
-WHERE phone IS NOT NULL;
-```
+**What you should understand:**
+- Multiple insert statements save time
+- Optional columns may be left empty
+- Defaults are used automatically when values are missing
 
 ---
 
-## 11. Main WHERE Filter Types Summary
-The most common filters used in WHERE are:
+## Task 7: Insert Customers
+Insert at least 4 customer records.
 
-- Comparison filters: `=`, `>`, `<`, `>=`, `<=`, `!=`
-- Logical filters: `AND`, `OR`, `NOT`
-- Range filters: `BETWEEN`, `NOT BETWEEN`
-- List filters: `IN`, `NOT IN`
-- Pattern filters: `LIKE`, `NOT LIKE`
-- Null checks: `IS NULL`, `IS NOT NULL`
+**Requirements:**
+- Provide realistic names and email values
+- At least one customer should have a missing phone number
+- Ensure email values are unique
+- Use different cities
 
----
-
-## 12. When to Use Which Filter?
-
-### Use `=` when
-- You know the exact value.
-```sql
-WHERE city = 'Hyderabad';
-```
-
-### Use `BETWEEN` when
-- You need a range of values.
-```sql
-WHERE price BETWEEN 1000 AND 5000;
-```
-
-### Use `IN` when
-- You need a list of allowed values.
-```sql
-WHERE city IN ('Hyderabad', 'Pune', 'Bengaluru');
-```
-
-### Use `LIKE` when
-- You need partial matching or pattern matching.
-```sql
-WHERE customer_name LIKE 'A%';
-```
-
-### Use `IS NULL` when
-- You want to find missing values.
-```sql
-WHERE phone IS NULL;
-```
-
-### Use `AND` when
-- Multiple conditions must all be true.
-```sql
-WHERE city = 'Hyderabad' AND status = 'Active';
-```
-
-### Use `OR` when
-- Any one of multiple conditions is acceptable.
-```sql
-WHERE city = 'Hyderabad' OR city = 'Pune';
-```
+**What you should understand:**
+- Unique constraints prevent duplicate email values
+- Optional fields may be left blank
+- Real business systems often have incomplete or missing optional data
 
 ---
 
-## 13. Best Practices
-- Use `WHERE` to reduce the number of rows returned.
-- Use parentheses in complex conditions for clarity.
-- Never use `= NULL`; always use `IS NULL`.
-- Use `IN` instead of many OR conditions when possible.
-- Use `LIKE` only when pattern matching is required.
+## Task 8: Insert Orders
+Insert at least 3 order records.
+
+**Requirements:**
+- Each order must reference an existing customer
+- Include realistic dates
+- Include realistic order totals and status
+- Each order should satisfy all constraints
+
+**What you should understand:**
+- Foreign keys ensure valid relationships
+- Table linking is essential in relational databases
 
 ---
 
-## 14. Example Combined Query
-```sql
-SELECT customer_name, city, status
-FROM customers
-WHERE city IN ('Hyderabad', 'Bengaluru')
-AND status = 'Active'
-AND phone IS NOT NULL;
-```
+## Task 9: Update a Single Product
+Update one product record.
 
-This query finds active customers from Hyderabad or Bengaluru who have a phone number.
+**Scenario:**
+You need to increase or decrease the price of a product due to a sale.
+
+**Tasks:**
+- Choose one product
+- Change only the relevant field
+- Use a condition to target the correct row
+- Verify that only that product changed
+
+**What you should understand:**
+- UPDATE works on rows that match a condition
+- WHERE is necessary to avoid changing every row
+- Single row updates are common in real systems
+
+---
+
+## Task 10: Update Multiple Products
+Update several products at once.
+
+**Scenario:**
+All electronics products need a product price adjustment.
+
+**Tasks:**
+- Identify products in a specific category
+- Update the price or discount for all matching products
+- Verify the number of rows affected
+
+**What you should understand:**
+- UPDATE can affect many rows at once
+- Conditions determine which records change
+- Data updates should be carefully reviewed
+
+---
+
+## Task 11: Update Multiple Columns
+Update one customer record with multiple values.
+
+**Scenario:**
+A customer changed their phone number and moved to another city.
+
+**Tasks:**
+- Modify the customer record
+- Update both phone number and city
+- Verify both values changed
+
+**What you should understand:**
+- Multiple columns can be updated in one statement
+- Several values can change for the same row
+
+---
+
+## Task 12: Delete One Record
+Delete a specific product or customer.
+
+**Scenario:**
+A product is discontinued, or a customer record is being removed from the system.
+
+**Tasks:**
+- Decide which row to delete
+- Use a condition to target only the selected record
+- Verify the record is gone
+
+**What you should understand:**
+- DELETE removes rows from a table
+- WHERE is critical for safety
+- Always confirm what is being removed before executing
+
+---
+
+## Task 13: Delete Multiple Records
+Delete multiple rows using one condition.
+
+**Scenario:**
+Remove inactive or obsolete records based on a condition.
+
+**Tasks:**
+- Select rows matching a common condition
+- Delete all matching records
+- Verify how many rows were removed
+
+**What you should understand:**
+- DELETE can remove more than one row
+- Conditional deletion is common in maintenance work
+
+---
+
+## Task 14: Alter Table - Add a Column
+Add a new column to the products table.
+
+**Scenario:**
+The store wants to track supplier information.
+
+**Tasks:**
+- Add a supplier name column
+- Choose an appropriate data type
+- Decide whether it should allow NULL values
+- Verify the new column exists
+
+**What you should understand:**
+- ALTER TABLE adjusts an existing structure
+- New columns are added without deleting table data
+- Good design often changes over time
+
+---
+
+## Task 15: Alter Table - Remove a Column
+Remove a column that is no longer needed.
+
+**Scenario:**
+A temporary or unused field should be removed.
+
+**Tasks:**
+- Drop an unnecessary column
+- Verify the table still works after the change
+- Check whether any data risk is created
+
+**What you should understand:**
+- Dropping columns is a structural change
+- Structural changes should be planned carefully
+
+---
+
+## Task 16: Alter Table - Rename a Column
+Rename a column in one of the tables.
+
+**Scenario:**
+A column name should be clearer for business users.
+
+**Tasks:**
+- Rename a column to a clearer name
+- Ensure the new name is meaningful
+- Verify the table still works correctly
+
+**What you should understand:**
+- Column names affect readability and maintenance
+- Renaming does not change the data itself
+
+---
+
+## Task 17: Alter Table - Change Data Type
+Modify the data type of an existing column.
+
+**Scenario:**
+A field needs to store a longer value than before.
+
+**Tasks:**
+- Change the data type of a relevant column
+- Choose a larger or more suitable type
+- Verify the change was applied correctly
+
+**What you should understand:**
+- Data type selection matters from the beginning
+- Some schema changes require updates to existing design
+
+---
+
+## Task 18: Understand DELETE vs TRUNCATE
+Create a backup/test table and compare operations.
+
+**Tasks:**
+- Create a copy of one table for testing
+- Remove selected records using DELETE
+- Create another copy and clear all records using TRUNCATE
+- Compare the effects on the table and the data
+
+**What you should understand:**
+- DELETE is row-based and conditional
+- TRUNCATE removes all rows quickly
+- The table structure remains in both cases
+
+---
+
+## Task 19: Understand DROP
+Remove an entire table that is no longer needed.
+
+**Tasks:**
+- Create a test table
+- Insert sample data
+- Drop the table
+- Try to access it later and note the result
+
+**What you should understand:**
+- DROP removes the entire table object
+- A dropped table is no longer available
+- Always make backups before dropping tables
+
+---
+
+## Task 20: Create a Temporary Table
+Use a temporary table for testing or intermediate work.
+
+**Scenario:**
+You need to create a temporary list of products for review before finalizing changes.
+
+**Tasks:**
+- Create a temporary table
+- Insert a few records
+- Query the table
+- Note how it behaves compared to normal tables
+
+**What you should understand:**
+- Temporary tables are useful for intermediate processing
+- They help avoid changing permanent tables during testing
+
+---
+
+## Task 21: Clone a Table
+Create a backup or clone of a table before making changes.
+
+**Tasks:**
+- Create a copy of one of your tables
+- Use a meaningful backup table name
+- Verify both tables contain the same data
+- Make schema changes on one table while keeping the other unchanged
+
+**What you should understand:**
+- Cloning helps test changes safely
+- Backups reduce the risk of accidental loss
+- Testing should happen before production changes
+
+---
+
+## Task 22: Final Practice Review
+After completing all tasks, write a short summary explaining:
+
+- Which tables you created
+- Which constraints you used
+- Which records were inserted or changed
+- Which columns were modified
+- Which operations were destructive
+- Which backup/testing methods you used
+- What you learned about SQL safety and design
+
+---
+
+## Reflection Questions
+Answer the following in your own words:
+
+1. Why is a primary key important?
+2. What is the purpose of a foreign key?
+3. Why should you use NOT NULL where required?
+4. What is the difference between DELETE and TRUNCATE?
+5. What is the difference between DELETE and DROP?
+6. Why do we use constraints?
+7. How do defaults reduce manual errors?
+8. Why should you test schema changes on a clone first?
+9. Why is UPDATE dangerous if you forget WHERE?
+10. Why are temporary tables useful in practice?
 
 ---
 
 ## Summary
-SELECT reads data, DISTINCT removes duplicates, and WHERE filters the rows you need. Understanding the different filter types is essential for writing accurate SQL queries.
-
----
-
-## Interview Questions
-1. What is the purpose of WHERE?
-2. Why is DISTINCT important?
-3. Why is `IS NULL` used instead of `= NULL`?
-4. When would you use `IN` instead of OR?
-5. What is the difference between `BETWEEN` and `IN`?
-6. How is `LIKE` different from `=`?
-7. When is `AND` preferred over `OR`?
-8. Why do we use parentheses in complex conditions?
-
+This practical work helps you understand how databases are created, structured, updated, and maintained in real-world systems. It covers all key topics in this module: creating tables, using constraints, inserting and updating data, and making safe schema changes.
 
 
