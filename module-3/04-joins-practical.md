@@ -1,7 +1,7 @@
-# Module 3: Joins Practice File
+# Module 3: Joins Practice File (Join-focused only)
 
 ## Objective
-Practice SQL joins from beginner to intermediate level using simple business tables. The goal is to understand how records match across tables and how to write readable queries step by step.
+Practice SQL joins from beginner to advanced join-only scenarios. This file excludes aggregation, GROUP BY, ORDER BY, and window functions — those will be covered later. The goal here is to teach join structure, null handling, anti-/semi-joins, and multi-table matching.
 
 ---
 
@@ -66,10 +66,6 @@ INNER JOIN products p ON o.product_id = p.product_id;
 | 101      | Rahul         | Mobile       | 2        |
 | 102      | Neha          | Chair        | 1        |
 
-### Explanation
-- Only rows with matching customer_id and product_id are shown.
-- This is the most common join type.
-
 ---
 
 ## Exercise 2: LEFT JOIN
@@ -89,14 +85,9 @@ LEFT JOIN orders o ON c.customer_id = o.customer_id;
 | 2           | Neha          | 102      | 2024-02-02 |
 | 3           | Kiran         | NULL     | NULL       |
 
-### Explanation
-- All customers are shown.
-- Customers with no order still appear with NULL values on the order side.
-
 ---
 
-## Exercise 3: Find customers without orders
-Use LEFT JOIN with a filter to find customers who never placed an order.
+## Exercise 3: ANTI-JOIN (customers without orders)
 
 ```sql
 SELECT c.customer_id, c.customer_name
@@ -110,13 +101,10 @@ WHERE o.order_id IS NULL;
 |------------:|---------------|
 | 3           | Kiran         |
 
-### Explanation
-- This is called an anti-join.
-- It shows rows in the left table that do not have a match in the right table.
-
 ---
 
-## Exercise 4: Show all products and matching order information
+## Exercise 4: PRODUCTS LEFT JOIN ORDERS (find products with/without orders)
+
 ```sql
 SELECT p.product_id, p.product_name, o.order_id, o.quantity
 FROM products p
@@ -130,13 +118,9 @@ LEFT JOIN orders o ON p.product_id = o.product_id;
 | 11         | Mobile       | 101      | 2        |
 | 12         | Chair        | 102      | 1        |
 
-### Explanation
-- All products are listed.
-- Products without an order would also appear with NULL values.
-
 ---
 
-## 2. Medium Level: Multiple Tables + Aggregation
+## 2. Medium Level: Self-joins, USING/ON, and Semi-joins
 
 ### Table Setup
 ```sql
@@ -157,8 +141,7 @@ INSERT INTO employees (employee_id, employee_name, department, manager_id) VALUE
 
 ---
 
-## Exercise 5: SELF JOIN
-Display each employee with their manager name.
+## Exercise 5: SELF JOIN (employee → manager)
 
 ```sql
 SELECT e.employee_id,
@@ -177,17 +160,14 @@ LEFT JOIN employees m ON e.manager_id = m.employee_id;
 | 4           | Mary     | Alice   |
 | 5           | Steve    | John    |
 
-### Explanation
-- The same table is joined to itself.
-- This is used for hierarchy queries like manager-subordinate relationships.
-
 ---
 
-## Exercise 6: Show managers who have direct reports
+## Exercise 6: Find managers (semi-join using EXISTS)
+
 ```sql
 SELECT DISTINCT m.employee_id, m.employee_name
 FROM employees m
-INNER JOIN employees e ON m.employee_id = e.manager_id;
+WHERE EXISTS (SELECT 1 FROM employees e WHERE e.manager_id = m.employee_id);
 ```
 
 ### Expected Output
@@ -197,263 +177,187 @@ INNER JOIN employees e ON m.employee_id = e.manager_id;
 | 2           | Alice         |
 | 3           | John          |
 
-### Explanation
-- Only employees who manage others are returned.
-- DISTINCT avoids duplicates when an employee has multiple reports.
-
 ---
 
-## Exercise 7: Count employees in each department
+## Exercise 7: USING vs ON example (explicit vs shorthand)
+
+Assume orders.product_id and products.product_id are same-named keys.
+
 ```sql
-SELECT department, COUNT(*) AS total_employees
-FROM employees
-GROUP BY department;
+-- USING (shorthand)
+SELECT o.order_id, o.customer_id, p.product_name
+FROM orders o
+JOIN products p USING (product_id);
+
+-- Equivalent explicit ON version (recommended for clarity)
+SELECT o.order_id, o.customer_id, p.product_name
+FROM orders o
+JOIN products p ON o.product_id = p.product_id;
 ```
 
-### Expected Output
-| department | total_employees |
-|------------|----------------:|
-| Engineering| 3               |
-| Sales      | 2               |
-
-### Explanation
-- This uses GROUP BY with COUNT.
-- It summarizes the number of employees per department.
+### Expected Output (both queries return same rows):
+| order_id | customer_id | product_name |
+|---------:|------------:|--------------|
+| 100      | 1           | Laptop       |
+| 101      | 1           | Mobile       |
+| 102      | 2           | Chair        |
 
 ---
 
-## Exercise 8: Department-wise employee report with manager details
+## 3. Complex Level: Multi-table joins and reconciliation (join-only)
+
+### Table Setup (orders/payments/products/customers)
 ```sql
-SELECT e.department,
-       e.employee_name,
-       m.employee_name AS manager_name
-FROM employees e
-LEFT JOIN employees m ON e.manager_id = m.employee_id
-ORDER BY e.department, e.employee_id;
-```
-
-### Expected Output
-| department | employee_name | manager_name |
-|------------|--------------|--------------|
-| Engineering| Bob          | NULL         |
-| Engineering| Alice        | Bob          |
-| Engineering| Mary         | Alice        |
-| Sales      | John         | Bob          |
-| Sales      | Steve        | John         |
-
-### Explanation
-- This query combines employee hierarchy and department grouping.
-- It is useful for reporting teams to their manager.
-
----
-
-## 3. Complex Level: Real-World Multi-Table Joins
-
-### Table Setup
-```sql
-CREATE TABLE regions (
-    region_id INT PRIMARY KEY,
-    region_name VARCHAR(50)
+CREATE TABLE payments (
+    payment_id INT PRIMARY KEY,
+    order_id INT,
+    amount DECIMAL(10,2),
+    payment_date DATE
 );
 
-CREATE TABLE products (
-    product_id INT PRIMARY KEY,
-    product_name VARCHAR(50),
-    category VARCHAR(50)
-);
+INSERT INTO payments (payment_id, order_id, amount, payment_date) VALUES
+(1000, 100, 45000.00, '2024-01-07'),
+(1001, 101, 50000.00, '2024-01-08'),
+(1002, 200, 3000.00, '2024-01-09'); -- payment with no matching order
 
-CREATE TABLE sales (
-    sale_id INT PRIMARY KEY,
-    product_id INT,
-    region_id INT,
-    sale_date DATE,
-    amount DECIMAL(10,2)
-);
-
-CREATE TABLE promotions (
-    promo_id INT PRIMARY KEY,
-    product_id INT,
-    promo_name VARCHAR(50)
-);
-
-INSERT INTO regions (region_id, region_name) VALUES
-(1, 'North'),
-(2, 'South'),
-(3, 'West');
-
-INSERT INTO products (product_id, product_name, category) VALUES
-(10, 'Laptop', 'Electronics'),
-(11, 'Mobile', 'Electronics'),
-(12, 'Chair', 'Furniture'),
-(13, 'Desk', 'Furniture');
-
-INSERT INTO sales (sale_id, product_id, region_id, sale_date, amount) VALUES
-(1000, 10, 1, '2024-01-05', 45000.00),
-(1001, 11, 1, '2024-01-08', 25000.00),
-(1002, 12, 2, '2024-01-09', 5000.00),
-(1003, 10, 3, '2024-02-01', 44000.00);
-
-INSERT INTO promotions (promo_id, product_id, promo_name) VALUES
-(900, 10, 'New Year Sale'),
-(901, 13, 'Clearance Sale');
+-- reuse products/customers/orders from earlier sections
 ```
 
 ---
 
-## Exercise 9: Join sales with region and product
+## Exercise 8: Multi-join order report (orders → customers → products → payments)
+
 ```sql
-SELECT s.sale_id, p.product_name, r.region_name, s.amount
-FROM sales s
-JOIN products p ON s.product_id = p.product_id
-JOIN regions r ON s.region_id = r.region_id;
-```
-
-### Expected Output
-| sale_id | product_name | region_name | amount    |
-|--------:|--------------|-------------|----------:|
-| 1000    | Laptop       | North       | 45000.00 |
-| 1001    | Mobile       | North       | 25000.00 |
-| 1002    | Chair        | South       | 5000.00  |
-| 1003    | Laptop       | West        | 44000.00 |
-
-### Explanation
-- This is a real business report combining product, region, and sales information.
-
----
-
-## Exercise 10: Find products that have promotions but no sales
-```sql
-SELECT p.product_id, p.product_name
-FROM products p
-JOIN promotions pr ON p.product_id = pr.product_id
-LEFT JOIN sales s ON p.product_id = s.product_id
-WHERE s.sale_id IS NULL;
-```
-
-### Expected Output
-| product_id | product_name |
-|-----------:|--------------|
-| 13         | Desk         |
-
-### Explanation
-- Product 13 has a promotion but no sales in the sales table.
-- This is a useful reconciliation check.
-
----
-
-## Exercise 11: Total sales by region and product
-```sql
-SELECT r.region_name, p.product_name, SUM(s.amount) AS total_sales
-FROM sales s
-JOIN products p ON s.product_id = p.product_id
-JOIN regions r ON s.region_id = r.region_id
-GROUP BY r.region_name, p.product_name
-ORDER BY r.region_name, total_sales DESC;
-```
-
-### Expected Output
-| region_name | product_name | total_sales |
-|-------------|--------------|-----------:|
-| North       | Laptop       | 45000.00   |
-| North       | Mobile       | 25000.00   |
-| South       | Chair        | 5000.00    |
-| West        | Laptop       | 44000.00   |
-
-### Explanation
-- Aggregation is combined with joins to produce a sales summary.
-
----
-
-## Exercise 12: Show products with no sales and no promotion
-```sql
-SELECT p.product_id, p.product_name
-FROM products p
-LEFT JOIN sales s ON p.product_id = s.product_id
-LEFT JOIN promotions pr ON p.product_id = pr.product_id
-WHERE s.sale_id IS NULL AND pr.promo_id IS NULL;
-```
-
-### Expected Output
-| product_id | product_name |
-|-----------:|--------------|
-| 12         | Chair        |
-
-### Explanation
-- Product 12 has sales, so this query would not return it if sales exist.
-- In the sample data, Chair is in sales so actual result may be none.
-- Use this as a check for products that are absent from both sales and promotions.
-
----
-
-## Exercise 13: Show all products, their promotion, and sales total
-```sql
-SELECT p.product_id,
+SELECT o.order_id,
+       c.customer_name,
        p.product_name,
-       COALESCE(SUM(s.amount), 0) AS total_sales,
-       pr.promo_name
-FROM products p
-LEFT JOIN sales s ON p.product_id = s.product_id
-LEFT JOIN promotions pr ON p.product_id = pr.product_id
-GROUP BY p.product_id, p.product_name, pr.promo_name
-ORDER BY p.product_id;
+       o.quantity,
+       pay.payment_id,
+       pay.amount
+FROM orders o
+LEFT JOIN customers c ON o.customer_id = c.customer_id
+LEFT JOIN products p ON o.product_id = p.product_id
+LEFT JOIN payments pay ON o.order_id = pay.order_id;
 ```
 
 ### Expected Output
-| product_id | product_name | total_sales | promo_name     |
-|-----------:|--------------|-----------:|----------------|
-| 10         | Laptop       | 89000.00   | New Year Sale  |
-| 11         | Mobile       | 51000.00   | NULL           |
-| 12         | Chair        | 5000.00    | NULL           |
-| 13         | Desk         | 0.00       | Clearance Sale |
+| order_id | customer_name | product_name | quantity | payment_id | amount    |
+|--------:|---------------|--------------|---------:|-----------:|----------:|
+| 100     | Rahul         | Laptop       | 1        | 1000       | 45000.00 |
+| 101     | Rahul         | Mobile       | 2        | 1001       | 50000.00 |
+| 102     | Neha          | Chair        | 1        | NULL       | NULL     |
 
 ### Explanation
-- `COALESCE` replaces missing sales totals with 0.
-- This is commonly used in reporting.
+- LEFT JOINs keep all orders even if payments are missing.
+- Payment 1002 (for order 200) is not shown — reconciliation below will reveal it.
 
 ---
 
-## Practice Tips
-- Start with simple join logic before trying multiple tables.
-- Always check the join key carefully.
-- Use LEFT JOIN when you want to keep all rows from one table.
-- Use anti-join patterns when you need unmatched rows.
-- Use COALESCE for clean reports.
+## Exercise 9: Find orders without payments (anti-join)
 
----
-
-## Final Challenge
-Write a query to answer this business question:
-
-"Which region has the highest total sales, and which product contributed most in that region?"
-
-Try writing it using joins and grouping first, then compare with a model answer.
-
-### Model Answer
 ```sql
-SELECT r.region_name,
-       p.product_name,
-       SUM(s.amount) AS total_sales
-FROM sales s
-JOIN products p ON s.product_id = p.product_id
-JOIN regions r ON s.region_id = r.region_id
-GROUP BY r.region_name, p.product_name
-ORDER BY total_sales DESC;
+SELECT o.order_id, o.customer_id
+FROM orders o
+LEFT JOIN payments p ON o.order_id = p.order_id
+WHERE p.payment_id IS NULL;
 ```
 
 ### Expected Output
-| region_name | product_name | total_sales |
-|-------------|--------------|-----------:|
-| North       | Laptop       | 45000.00   |
-| North       | Mobile       | 25000.00   |
-| West        | Laptop       | 44000.00   |
-| South       | Chair        | 5000.00    |
+| order_id | customer_id |
+|--------:|------------:|
+| 102     | 2           |
 
 ---
 
-## Summary
-These exercises progressively teach join logic:
-- Easy: basic match and unmatched rows
-- Medium: self-join and aggregation
-- Complex: multi-table reporting and business analysis
+## Exercise 10: Find payments without matching orders (anti-join other side)
 
-This structure makes joins easier to understand and easier to apply in real SQL work.
+```sql
+SELECT p.payment_id, p.order_id, p.amount
+FROM payments p
+LEFT JOIN orders o ON p.order_id = o.order_id
+WHERE o.order_id IS NULL;
+```
+
+### Expected Output
+| payment_id | order_id | amount   |
+|-----------:|---------:|---------:|
+| 1002       | 200      | 3000.00  |
+
+---
+
+## Exercise 11: Full reconciliation (emulate FULL OUTER JOIN across orders and payments)
+
+Portable approach using LEFT and RIGHT joins with UNION ALL:
+
+```sql
+-- left side: all orders with payments where available
+SELECT o.order_id, o.customer_id, p.payment_id, p.amount
+FROM orders o
+LEFT JOIN payments p ON o.order_id = p.order_id
+
+UNION ALL
+
+-- right side: payments that had no matching orders (exclude rows already returned by left join)
+SELECT o.order_id, o.customer_id, p.payment_id, p.amount
+FROM orders o
+RIGHT JOIN payments p ON o.order_id = p.order_id
+WHERE o.order_id IS NULL;
+```
+
+### Expected Output (conceptual)
+| order_id | customer_id | payment_id | amount   |
+|--------:|------------:|-----------:|---------:|
+| 100     | 1           | 1000       | 45000.00|
+| 101     | 1           | 1001       | 50000.00|
+| 102     | 2           | NULL       | NULL    |
+| NULL    | NULL        | 1002       | 3000.00 |
+
+---
+
+## Exercise 12: CROSS JOIN small demo (combine small sets)
+
+```sql
+-- small cross join of two short lists
+SELECT c.customer_name, p.product_name
+FROM (SELECT * FROM customers WHERE customer_id <= 2) c
+CROSS JOIN (SELECT * FROM products WHERE product_id <= 11) p;
+```
+
+### Expected Output
+| customer_name | product_name |
+|--------------:|--------------|
+| Rahul         | Laptop       |
+| Rahul         | Mobile       |
+| Neha          | Laptop       |
+| Neha          | Mobile       |
+
+---
+
+## Exercise 13: USING vs ON practical check
+
+```sql
+-- USING will not repeat the shared column in output in some DBs
+SELECT o.order_id, o.customer_id, p.product_name
+FROM orders o
+JOIN products p USING (product_id);
+
+-- ON version returns same data but is explicit
+SELECT o.order_id, o.customer_id, p.product_name
+FROM orders o
+JOIN products p ON o.product_id = p.product_id;
+```
+
+### Expected Output (both):
+| order_id | customer_id | product_name |
+|---------:|------------:|--------------|
+| 100      | 1           | Laptop       |
+| 101      | 1           | Mobile       |
+| 102      | 2           | Chair        |
+
+---
+
+## Final Notes
+- This file focuses strictly on joins, anti-/semi-joins, and reconciliation patterns.
+- Aggregation, grouping, ordering, and window functions will be covered in a separate file to avoid mixing concepts.
+
+If you want, I will now update the repository with this join-only practice file (replacing the previous practice file). Confirm and I will commit the change.
