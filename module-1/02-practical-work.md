@@ -1,700 +1,1218 @@
-# Module 1: SQL Fundamentals - DDL & DML Basics
+# Module 1: SQL Fundamentals — DDL & DML Practical Work
 
-## Purpose
+## Overview
 
-This module introduces the core concepts of database design and data manipulation. You will learn how to create databases and tables, insert and modify data, and understand the lifecycle of database objects.
+This workbook provides hands-on exercises for learning SQL Server's Data Definition Language (DDL) and Data Manipulation Language (DML).
 
----
+You will practise creating databases and tables, defining constraints, inserting and modifying data, changing table structures, and managing temporary tables.
 
-## Sample Practice Data for This Module
+**Difficulty:** Beginner to Intermediate  
+**Database:** Microsoft SQL Server  
+**Learning approach:** Attempt each exercise before checking its solution.
 
-Before practicing any DDL or DML commands, use this small sample setup.
+## Learning Objectives
 
-```sql
-CREATE DATABASE ecommerce_db;
-USE ecommerce_db;
+By completing this workbook, you will be able to:
 
-CREATE TABLE customers (
-    customer_id INT PRIMARY KEY,
-    customer_name VARCHAR(100) NOT NULL,
-    email VARCHAR(255) UNIQUE,
-    city VARCHAR(50),
-    phone VARCHAR(20),
-    is_active BOOLEAN DEFAULT TRUE
-);
-
-CREATE TABLE products (
-    product_id INT PRIMARY KEY,
-    product_name VARCHAR(100) NOT NULL,
-    category VARCHAR(50),
-    price DECIMAL(10,2) NOT NULL CHECK (price > 0),
-    stock_quantity INT DEFAULT 0,
-    is_available BOOLEAN DEFAULT TRUE
-);
-
-CREATE TABLE orders (
-    order_id INT PRIMARY KEY,
-    customer_id INT NOT NULL,
-    order_date DATE,
-    total_amount DECIMAL(10,2) CHECK (total_amount > 0),
-    order_status VARCHAR(20) DEFAULT 'Pending',
-    FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
-);
-
-INSERT INTO customers (customer_id, customer_name, email, city, phone, is_active) VALUES
-(1, 'Rahul Kumar', 'rahul@email.com', 'Hyderabad', '9876543210', TRUE),
-(2, 'Neha Singh', 'neha@email.com', 'Chennai', '9123456789', TRUE),
-(3, 'Kiran Patel', 'kiran@email.com', 'Bengaluru', NULL, FALSE),
-(4, 'Amit Sharma', 'amit@email.com', 'Delhi', '9988776655', TRUE);
-
-INSERT INTO products (product_id, product_name, category, price, stock_quantity, is_available) VALUES
-(101, 'Laptop', 'Electronics', 45000.00, 12, TRUE),
-(102, 'Mobile', 'Electronics', 25000.00, 25, TRUE),
-(103, 'Chair', 'Furniture', 2500.00, 30, TRUE),
-(104, 'Desk', 'Furniture', 5000.00, 8, FALSE),
-(105, 'Keyboard', 'Electronics', 1200.00, 40, TRUE);
-
-INSERT INTO orders (order_id, customer_id, order_date, total_amount, order_status) VALUES
-(1, 1, '2024-01-12', 45000.00, 'Delivered'),
-(2, 2, '2024-01-20', 25000.00, 'Processing'),
-(3, 1, '2024-02-02', 5000.00, 'Shipped'),
-(4, 4, '2024-02-15', 1200.00, 'Pending');
-```
-
-This sample data will be used throughout the module to explain database design, constraints, inserts, updates, and deletions.
+- Create and manage databases and tables.
+- Select appropriate SQL Server data types.
+- Apply `PRIMARY KEY`, `FOREIGN KEY`, `UNIQUE`, `NOT NULL`, `CHECK`, and `DEFAULT` constraints.
+- Insert, update, and delete records.
+- Modify table structures using `ALTER TABLE`.
+- Understand the differences between `DELETE`, `TRUNCATE`, and `DROP`.
+- Create temporary tables and copy data into new tables.
+- Execute SQL scripts safely and validate the results.
 
 ---
 
-## 1. Database and Schema Basics
+## 1. Getting Started
 
-### What is a Database?
-A database is an organized collection of structured data stored electronically on a computer system.
+### Exercise 1.1: Create a practice database
 
-Examples:
-- Student management database
-- E-commerce database
-- Bank account database
-- Hospital patient database
+**Task**
 
-### What is a Schema?
-A schema is the blueprint or structure that defines:
-- What tables exist
-- What columns are in each table
-- What data types each column holds
-- What relationships exist between tables
+Create a database named `SQLLearning_Module1_Practice`.
 
-### What is a Table?
-A table is a structured collection of data organized in rows and columns, similar to a spreadsheet.
+**Expected outcome**
 
-Example:
+A database with the specified name should exist in SQL Server.
 
-| customer_id | customer_name | city      | email               |
-|-------------|---------------|-----------|---------------------|
-| 1           | Rahul         | Hyderabad | rahul@email.com     |
-| 2           | Neha          | Chennai   | neha@email.com      |
-| 3           | Kiran         | Bangalore | kiran@email.com     |
-
-- Each row represents one record
-- Each column represents one attribute
-- Rows and columns together form the table structure
-
----
-
-## 2. Table Structure Concepts
-
-### Components of a Table
-
-#### Row
-One complete record in a table.
-
-Example:
-```
-(1, Rahul, Hyderabad, rahul@email.com)
-```
-
-#### Column
-A property or attribute.
-
-Example:
-```
-customer_name
-```
-
-#### Field
-The value at the intersection of a row and column.
-
-Example:
-```
-Rahul
-```
-
-#### Record
-One complete row of data.
-
-### Why Structure Matters
-
-Good table structure ensures:
-- Data consistency
-- Data integrity
-- Efficient querying
-- Reliable reporting
-- Easy maintenance
-
----
-
-## 3. Data Types
-
-Choosing the correct data type is crucial. It ensures data is stored correctly and queries run efficiently.
-
-### Integer Types
-Used for whole numbers.
-
-- `INT` or `INTEGER`: standard integer
-- `SMALLINT`: smaller range
-- `BIGINT`: larger range
-
-Example:
-```sql
-customer_id INT
-product_id INT
-age SMALLINT
-```
-
-### Decimal Types
-Used for numbers with decimal places, especially money.
-
-- `DECIMAL(p,s)` or `NUMERIC(p,s)`
-  - p = total digits
-  - s = digits after decimal point
-
-Example:
-```sql
-price DECIMAL(10,2)        -- Up to 99,999,999.99
-discount DECIMAL(5,2)      -- Up to 999.99
-```
-
-### String Types
-Used for text data.
-
-- `CHAR(n)`: fixed-length string
-- `VARCHAR(n)`: variable-length string
-- `TEXT`: long text (varies by system)
-
-Example:
-```sql
-customer_name VARCHAR(100)
-email VARCHAR(255)
-description TEXT
-```
-
-### Date and Time Types
-Used for dates and timestamps.
-
-- `DATE`: only date (YYYY-MM-DD)
-- `TIME`: only time (HH:MM:SS)
-- `TIMESTAMP`: date and time together
-
-Example:
-```sql
-birth_date DATE
-order_date DATE
-created_at TIMESTAMP
-last_updated TIMESTAMP
-```
-
-### Boolean Type
-Used for true/false values.
-
-- `BOOLEAN` or `BOOL`
-
-Example:
-```sql
-is_active BOOLEAN
-is_premium BOOLEAN
-```
-
-### Choosing the Right Data Type
-
-| Data | Suitable Type |
-|------|---------------|
-| Customer ID | INT |
-| Product Price | DECIMAL(10,2) |
-| Customer Name | VARCHAR(100) |
-| Order Date | DATE |
-| Is Active | BOOLEAN |
-| Account Balance | DECIMAL(15,2) |
-| Phone Number | VARCHAR(20) |
-| Email | VARCHAR(255) |
-
----
-
-## 4. CREATE DATABASE
-
-A database is a container that holds multiple tables.
-
-### Syntax
-```sql
-CREATE DATABASE database_name;
-```
-
-### Example
-```sql
-CREATE DATABASE ecommerce_db;
-```
-
-### Use the Database
-Before creating tables, you must select the database:
+**Solution**
 
 ```sql
-USE ecommerce_db;
+IF DB_ID('SQLLearning_Module1_Practice') IS NULL
+BEGIN
+    CREATE DATABASE SQLLearning_Module1_Practice;
+END;
+GO
+
+USE SQLLearning_Module1_Practice;
+GO
 ```
 
-Some systems use:
+**Explanation**
+
+- `CREATE DATABASE` creates a database.
+- `DB_ID()` checks whether a database exists.
+- `USE` selects the database for subsequent statements.
+- `GO` separates batches in tools such as SQL Server Management Studio (SSMS).
+
+The existence check makes the script safer to rerun.
+
+### Exercise 1.2: Verify the current database
+
+**Task**
+
+Display the name of the database currently selected.
+
+**Expected outcome**
+
+The result should be `SQLLearning_Module1_Practice`.
+
+**Solution**
+
 ```sql
-SELECT ecommerce_db;
-```
-
-Or:
-```sql
-SET DATABASE ecommerce_db;
-```
-
-### Important Notes
-- Database name should be meaningful
-- Use lowercase and underscores for clarity
-- Each database is separate
-- Multiple databases can exist on one server
-
----
-
-## 5. CREATE TABLE with Constraints
-
-A table is created with columns and constraints that define the structure and rules.
-
-### Basic Syntax
-```sql
-CREATE TABLE table_name (
-    column1 data_type constraint,
-    column2 data_type constraint,
-    column3 data_type constraint
-);
-```
-
-### Simple Example
-```sql
-CREATE TABLE customers (
-    customer_id INT PRIMARY KEY,
-    customer_name VARCHAR(100) NOT NULL,
-    email VARCHAR(255),
-    city VARCHAR(50)
-);
-```
-
-### Example with Multiple Constraints
-```sql
-CREATE TABLE products (
-    product_id INT PRIMARY KEY,
-    product_name VARCHAR(100) NOT NULL,
-    category VARCHAR(50),
-    price DECIMAL(10,2) NOT NULL,
-    stock_quantity INT DEFAULT 0
-);
-```
-
-### Structure Breakdown
-- `product_id INT PRIMARY KEY` — unique identifier
-- `product_name VARCHAR(100) NOT NULL` — required text field
-- `category VARCHAR(50)` — optional text field
-- `price DECIMAL(10,2) NOT NULL` — required money field
-- `stock_quantity INT DEFAULT 0` — defaults to 0 if not provided
-
----
-
-## 6. PRIMARY KEY and FOREIGN KEY
-
-### Primary Key
-A primary key uniquely identifies each row in a table. No two rows can have the same primary key value.
-
-#### Rules for Primary Key
-- Must be unique
-- Cannot be NULL
-- Only one primary key per table
-- Usually numeric (INT, BIGINT)
-
-#### Example
-```sql
-CREATE TABLE customers (
-    customer_id INT PRIMARY KEY,
-    customer_name VARCHAR(100),
-    email VARCHAR(255)
-);
-```
-
-Here, `customer_id` is the primary key. Each customer has a unique ID.
-
-### Foreign Key
-A foreign key links one table to another. It creates a relationship between tables.
-
-#### Rules for Foreign Key
-- References the primary key of another table
-- Ensures referential integrity
-- Prevents orphaned records
-- Can be NULL if not required
-
-#### Example
-```sql
-CREATE TABLE orders (
-    order_id INT PRIMARY KEY,
-    customer_id INT,
-    order_date DATE,
-    FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
-);
-```
-
-Here, `customer_id` in orders table references `customer_id` in customers table.
-
-This means:
-- Each order belongs to a valid customer
-- You cannot create an order for a non-existent customer
-- Data integrity is maintained
-
-#### Complete Example with Both Keys
-```sql
-CREATE TABLE customers (
-    customer_id INT PRIMARY KEY,
-    customer_name VARCHAR(100) NOT NULL,
-    email VARCHAR(255)
-);
-
-CREATE TABLE orders (
-    order_id INT PRIMARY KEY,
-    customer_id INT NOT NULL,
-    order_date DATE,
-    total_amount DECIMAL(10,2),
-    FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
-);
+SELECT DB_NAME() AS CurrentDatabase;
 ```
 
 ---
 
-## 7. Constraints - Types and Uses
+## 2. Creating Tables and Understanding Data Types
 
-Constraints are rules that control what data can be stored in a table.
+### Exercise 2.1: Create a Customers table
 
-### NOT NULL Constraint
-Ensures a column must always have a value.
+**Task**
+
+Create a table named `Customers` with the following columns:
+
+| Column | Data type | Requirement |
+|---|---|---|
+| CustomerID | INT | Primary key |
+| FirstName | VARCHAR(50) | Required |
+| LastName | VARCHAR(50) | Required |
+| Email | VARCHAR(100) | Unique |
+| City | VARCHAR(50) | Optional |
+| CreatedAt | DATETIME2 | Default to the current date and time |
+
+**Expected outcome**
+
+The table should be created with all six columns and their specified constraints.
+
+**Solution**
 
 ```sql
-CREATE TABLE employees (
-    emp_id INT PRIMARY KEY,
-    emp_name VARCHAR(100) NOT NULL,
-    email VARCHAR(255) NOT NULL
+CREATE TABLE dbo.Customers
+(
+    CustomerID INT PRIMARY KEY,
+    FirstName VARCHAR(50) NOT NULL,
+    LastName VARCHAR(50) NOT NULL,
+    Email VARCHAR(100) UNIQUE,
+    City VARCHAR(50) NULL,
+    CreatedAt DATETIME2 NOT NULL
+        DEFAULT SYSDATETIME()
 );
 ```
 
-Here, `emp_name` and `email` are required. You cannot insert a record without these values.
+**Explanation**
 
-### UNIQUE Constraint
-Ensures all values in a column are different.
+- `PRIMARY KEY` uniquely identifies each customer and prevents NULL values.
+- `NOT NULL` requires a value.
+- `UNIQUE` prevents duplicate non-NULL email values under the applicable SQL Server constraint rules.
+- `DEFAULT` supplies a value when the column is omitted from an insert.
+- `DATETIME2` supports date and time values with configurable fractional-second precision.
+
+### Exercise 2.2: Create a Products table
+
+**Task**
+
+Create a table named `Products` with:
+
+- `ProductID`: integer primary key.
+- `ProductName`: required text, maximum 100 characters.
+- `Price`: decimal with two decimal places, required.
+- `StockQuantity`: integer, required, default value of zero.
+- `Category`: text, maximum 50 characters.
+
+**Expected outcome**
+
+The table should enforce the required fields and supply zero when `StockQuantity` is omitted.
+
+**Solution**
 
 ```sql
-CREATE TABLE users (
-    user_id INT PRIMARY KEY,
-    username VARCHAR(50) UNIQUE,
-    email VARCHAR(255) UNIQUE
+CREATE TABLE dbo.Products
+(
+    ProductID INT PRIMARY KEY,
+    ProductName VARCHAR(100) NOT NULL,
+    Price DECIMAL(10,2) NOT NULL,
+    StockQuantity INT NOT NULL
+        DEFAULT 0,
+    Category VARCHAR(50) NULL
 );
 ```
 
-Here, no two users can have the same username or email.
+**Explanation**
 
-### DEFAULT Constraint
-Provides a default value if no value is provided.
+`DECIMAL(10,2)` allows up to ten total digits, including two digits after the decimal point. This makes it suitable for storing prices when the required precision fits the chosen range.
 
-```sql
-CREATE TABLE products (
-    product_id INT PRIMARY KEY,
-    product_name VARCHAR(100),
-    is_available BOOLEAN DEFAULT TRUE,
-    discount_percent DECIMAL(5,2) DEFAULT 0.00
-);
-```
+### Exercise 2.3: Inspect table structures
 
-If you don't specify `is_available`, it defaults to TRUE.
-If you don't specify `discount_percent`, it defaults to 0.00.
+**Task**
 
-### CHECK Constraint
-Restricts values to meet a condition.
+Retrieve the column definitions for `Customers` and `Products`.
+
+**Solution**
 
 ```sql
-CREATE TABLE orders (
-    order_id INT PRIMARY KEY,
-    quantity INT CHECK (quantity > 0),
-    price DECIMAL(10,2) CHECK (price > 0)
-);
+EXEC sp_help 'dbo.Customers';
+EXEC sp_help 'dbo.Products';
 ```
 
-Here:
-- `quantity` must be greater than 0
-- `price` must be greater than 0
-
-You cannot insert an order with negative quantity or price.
-
-### PRIMARY KEY Constraint
-Uniquely identifies each row.
+You can also use:
 
 ```sql
-CREATE TABLE customers (
-    customer_id INT PRIMARY KEY,
-    customer_name VARCHAR(100)
-);
+SELECT
+    TABLE_NAME,
+    COLUMN_NAME,
+    DATA_TYPE,
+    IS_NULLABLE,
+    CHARACTER_MAXIMUM_LENGTH,
+    NUMERIC_PRECISION,
+    NUMERIC_SCALE
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_SCHEMA = 'dbo'
+  AND TABLE_NAME IN ('Customers', 'Products')
+ORDER BY TABLE_NAME, ORDINAL_POSITION;
 ```
 
-### FOREIGN KEY Constraint
-Links to another table's primary key.
+**Expected outcome**
 
-```sql
-CREATE TABLE orders (
-    order_id INT PRIMARY KEY,
-    customer_id INT,
-    FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
-);
-```
-
-### Complete Example with All Constraints
-```sql
-CREATE TABLE students (
-    student_id INT PRIMARY KEY,
-    student_name VARCHAR(100) NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    age INT CHECK (age >= 18),
-    is_active BOOLEAN DEFAULT TRUE
-);
-```
+You should see each column's data type, nullability, and applicable length or numeric precision.
 
 ---
 
-## 8. INSERT Basics
+## 3. Primary Keys, Foreign Keys, and Constraints
 
-INSERT adds new records (rows) to a table.
+### Exercise 3.1: Create an Orders table
 
-### Single Insert
-Insert one record at a time.
+**Task**
 
-#### Syntax
+Create an `Orders` table with these requirements:
+
+- `OrderID`: primary key.
+- `CustomerID`: required integer referencing `Customers`.
+- `OrderDate`: required date and time, default to the current date and time.
+- `OrderStatus`: required text, default to `Pending`.
+- `TotalAmount`: required decimal value.
+
+**Solution**
+
 ```sql
-INSERT INTO table_name (column1, column2, column3)
-VALUES (value1, value2, value3);
+CREATE TABLE dbo.Orders
+(
+    OrderID INT PRIMARY KEY,
+    CustomerID INT NOT NULL,
+    OrderDate DATETIME2 NOT NULL
+        DEFAULT SYSDATETIME(),
+    OrderStatus VARCHAR(20) NOT NULL
+        DEFAULT 'Pending',
+    TotalAmount DECIMAL(12,2) NOT NULL,
+
+    CONSTRAINT FK_Orders_Customers
+        FOREIGN KEY (CustomerID)
+        REFERENCES dbo.Customers(CustomerID)
+);
 ```
 
-#### Example
+**Expected outcome**
+
+The table should be created with a foreign key linking orders to customers.
+
+A customer must exist before an order referencing that customer can be inserted.
+
+### Exercise 3.2: Add a CHECK constraint
+
+**Task**
+
+Modify the `Products` table so that a product cannot have a negative price.
+
+**Solution**
+
 ```sql
-INSERT INTO customers (customer_id, customer_name, email, city)
-VALUES (1, 'Rahul Kumar', 'rahul@email.com', 'Hyderabad');
+ALTER TABLE dbo.Products
+ADD CONSTRAINT CK_Products_Price
+CHECK (Price >= 0);
 ```
 
-### Insert All Columns
-If you provide values for all columns, you can omit the column list.
+**Expected outcome**
+
+An attempt to insert or update a product with a negative price should fail.
+
+### Exercise 3.3: Add a UNIQUE constraint
+
+**Task**
+
+Create an `Employees` table with an employee ID, name, and unique email address.
+
+**Solution**
 
 ```sql
-INSERT INTO customers
-VALUES (2, 'Neha Singh', 'neha@email.com', 'Chennai');
+CREATE TABLE dbo.Employees
+(
+    EmployeeID INT PRIMARY KEY,
+    EmployeeName VARCHAR(100) NOT NULL,
+    Email VARCHAR(100) NOT NULL,
+
+    CONSTRAINT UQ_Employees_Email
+        UNIQUE (Email)
+);
 ```
 
-### Insert Selected Columns
-If some columns are optional or have defaults, you can insert only specific columns.
+**Expected outcome**
+
+Two employees cannot share the same email address.
+
+### Exercise 3.4: Test constraint violations
+
+**Task**
+
+Try inserting a product with a negative price.
+
+**Solution**
 
 ```sql
-INSERT INTO customers (customer_id, customer_name, email)
-VALUES (3, 'Kiran Patel', 'kiran@email.com');
-```
-
-Here, `city` is not provided. If it has no default, it will be NULL.
-
-### Multiple Inserts
-Insert multiple records in one statement.
-
-```sql
-INSERT INTO customers (customer_id, customer_name, email, city)
+INSERT INTO dbo.Products
+    (ProductID, ProductName, Price, StockQuantity, Category)
 VALUES
-(1, 'Rahul Kumar', 'rahul@email.com', 'Hyderabad'),
-(2, 'Neha Singh', 'neha@email.com', 'Chennai'),
-(3, 'Kiran Patel', 'kiran@email.com', 'Bangalore'),
-(4, 'Amit Sharma', 'amit@email.com', 'Delhi');
+    (999, 'Invalid Product', -10.00, 5, 'Testing');
 ```
 
-This is more efficient than single inserts.
+**Expected outcome**
 
-### Multiple Inserts with Different Columns
-You can insert different sets of columns in one statement (if supported).
+SQL Server should reject the insert because it violates `CK_Products_Price`.
+
+**Learning point:** Constraints protect data quality at the database level, even when data is inserted by different applications or users.
+
+---
+
+## 4. INSERT Statement Practice
+
+### Exercise 4.1: Insert a single customer
+
+**Task**
+
+Insert the following customer:
+
+- Customer ID: 1
+- First name: Rahul
+- Last name: Sharma
+- Email: rahul.sharma@example.com
+- City: Hyderabad
+
+**Solution**
 
 ```sql
-INSERT INTO customers (customer_id, customer_name, email, city)
+INSERT INTO dbo.Customers
+    (CustomerID, FirstName, LastName, Email, City)
 VALUES
-(5, 'Priya Verma', 'priya@email.com', 'Pune'),
-(6, 'Rajesh Gupta', 'rajesh@email.com', NULL),
-(7, 'Meera Khan', 'meera@email.com', 'Lucknow');
+    (1, 'Rahul', 'Sharma',
+     'rahul.sharma@example.com', 'Hyderabad');
 ```
 
-Here, customer 6 has no city value (NULL).
+**Expected outcome**
 
-### Insert Data for Few Columns Only
-If columns are optional or have defaults, you don't need to provide all.
+One customer should be inserted. `CreatedAt` should receive its default value.
+
+### Exercise 4.2: Insert multiple customers
+
+**Task**
+
+Insert two additional customers.
+
+| CustomerID | FirstName | LastName | Email | City |
+|---:|---|---|---|---|
+| 2 | Priya | Reddy | priya.reddy@example.com | Chennai |
+| 3 | Arjun | Kumar | arjun.kumar@example.com | Bengaluru |
+
+**Solution**
 
 ```sql
-INSERT INTO products (product_id, product_name)
-VALUES (101, 'Laptop');
+INSERT INTO dbo.Customers
+    (CustomerID, FirstName, LastName, Email, City)
+VALUES
+    (2, 'Priya', 'Reddy',
+     'priya.reddy@example.com', 'Chennai'),
+    (3, 'Arjun', 'Kumar',
+     'arjun.kumar@example.com', 'Bengaluru');
 ```
 
-Here, only `product_id` and `product_name` are provided. Other columns will be NULL or use their defaults.
+**Expected outcome**
 
-Example with defaults:
+Three customers should now exist in the table.
+
+### Exercise 4.3: Insert data into selected columns
+
+**Task**
+
+Insert a customer without specifying the `City` column.
+
+**Solution**
+
 ```sql
-CREATE TABLE inventory (
-    item_id INT PRIMARY KEY,
-    item_name VARCHAR(100) NOT NULL,
-    quantity INT DEFAULT 0,
-    is_available BOOLEAN DEFAULT TRUE
+INSERT INTO dbo.Customers
+    (CustomerID, FirstName, LastName, Email)
+VALUES
+    (4, 'Sneha', 'Rao', 'sneha.rao@example.com');
+```
+
+**Expected outcome**
+
+The customer should be inserted, and `City` should be `NULL`.
+
+**Learning point:** An omitted column receives its default value if one is defined; otherwise, it receives `NULL` only if the column permits it. If the column is required and has no default, the insert fails.
+
+### Exercise 4.4: Insert products
+
+**Task**
+
+Insert three products.
+
+| ProductID | ProductName | Price | StockQuantity | Category |
+|---:|---|---:|---:|---|
+| 101 | Laptop | 65000.00 | 10 | Electronics |
+| 102 | Mouse | 750.00 | 50 | Accessories |
+| 103 | Keyboard | 1500.00 | 25 | Accessories |
+
+**Solution**
+
+```sql
+INSERT INTO dbo.Products
+    (ProductID, ProductName, Price, StockQuantity, Category)
+VALUES
+    (101, 'Laptop', 65000.00, 10, 'Electronics'),
+    (102, 'Mouse', 750.00, 50, 'Accessories'),
+    (103, 'Keyboard', 1500.00, 25, 'Accessories');
+```
+
+**Expected outcome**
+
+Three products should be available for subsequent exercises.
+
+### Exercise 4.5: Use a default value
+
+**Task**
+
+Insert a product without specifying `StockQuantity`.
+
+**Solution**
+
+```sql
+INSERT INTO dbo.Products
+    (ProductID, ProductName, Price, Category)
+VALUES
+    (104, 'USB Cable', 250.00, 'Accessories');
+```
+
+**Expected outcome**
+
+The new product should have `StockQuantity = 0`.
+
+---
+
+## 5. UPDATE Statement Practice
+
+> **Safety rule:** Always check which rows will be affected before executing an `UPDATE`. A missing `WHERE` clause can modify every row in the table.
+
+### Exercise 5.1: Update a customer's city
+
+**Task**
+
+Change Rahul Sharma's city from Hyderabad to Pune.
+
+**Solution**
+
+```sql
+UPDATE dbo.Customers
+SET City = 'Pune'
+WHERE CustomerID = 1;
+```
+
+**Expected outcome**
+
+Only the customer with ID 1 should be updated.
+
+### Exercise 5.2: Update a product's price
+
+**Task**
+
+Increase the price of the Mouse by 10%.
+
+**Solution**
+
+```sql
+UPDATE dbo.Products
+SET Price = Price * 1.10
+WHERE ProductID = 102;
+```
+
+**Expected outcome**
+
+The Mouse price should become `825.00`.
+
+### Exercise 5.3: Update multiple columns
+
+**Task**
+
+Change the Keyboard's price to `1600.00` and its stock quantity to `30`.
+
+**Solution**
+
+```sql
+UPDATE dbo.Products
+SET
+    Price = 1600.00,
+    StockQuantity = 30
+WHERE ProductID = 103;
+```
+
+**Expected outcome**
+
+Only the Keyboard record should be modified.
+
+### Exercise 5.4: Update using a condition
+
+**Task**
+
+Increase the price of every product in the Accessories category by 5%.
+
+**Solution**
+
+```sql
+UPDATE dbo.Products
+SET Price = Price * 1.05
+WHERE Category = 'Accessories';
+```
+
+**Expected outcome**
+
+All matching Accessories products should receive the price increase. Other categories should remain unchanged.
+
+**Discussion:** How many rows should this update affect? Check the table contents before and after executing it.
+
+---
+
+## 6. DELETE Statement Practice
+
+> **Safety rule:** `DELETE` without a `WHERE` clause removes every row from the target table. Review the matching rows first.
+
+### Exercise 6.1: Delete a specific product
+
+**Task**
+
+Delete the USB Cable product using its product ID.
+
+**Solution**
+
+```sql
+SELECT *
+FROM dbo.Products
+WHERE ProductID = 104;
+```
+
+After verifying the result:
+
+```sql
+DELETE FROM dbo.Products
+WHERE ProductID = 104;
+```
+
+**Expected outcome**
+
+The product with ID 104 should be removed.
+
+### Exercise 6.2: Delete using a condition
+
+**Task**
+
+Delete products whose stock quantity is zero.
+
+**Solution**
+
+First inspect the affected records:
+
+```sql
+SELECT *
+FROM dbo.Products
+WHERE StockQuantity = 0;
+```
+
+Then execute:
+
+```sql
+DELETE FROM dbo.Products
+WHERE StockQuantity = 0;
+```
+
+**Expected outcome**
+
+Only products with zero stock should be deleted.
+
+### Exercise 6.3: Understand foreign key restrictions
+
+**Task**
+
+Attempt to delete Rahul's customer record while an order references that customer.
+
+**Solution**
+
+First insert an order:
+
+```sql
+INSERT INTO dbo.Orders
+    (OrderID, CustomerID, TotalAmount)
+VALUES
+    (5001, 1, 65000.00);
+```
+
+Then attempt the deletion:
+
+```sql
+DELETE FROM dbo.Customers
+WHERE CustomerID = 1;
+```
+
+**Expected outcome**
+
+SQL Server should reject the deletion because `Orders` contains a referencing record and the foreign key does not specify cascading deletes.
+
+**Learning point:** Referential integrity prevents orphaned records. A referenced customer cannot be deleted until the dependent records are handled appropriately.
+
+---
+
+## 7. ALTER TABLE Practice
+
+### Exercise 7.1: Add a column
+
+**Task**
+
+Add a `PhoneNumber` column to the `Customers` table. It should allow up to 20 characters and permit `NULL`.
+
+**Solution**
+
+```sql
+ALTER TABLE dbo.Customers
+ADD PhoneNumber VARCHAR(20) NULL;
+```
+
+**Expected outcome**
+
+The table should contain a new `PhoneNumber` column.
+
+### Exercise 7.2: Change a column's data type
+
+**Task**
+
+Change `PhoneNumber` to allow up to 30 characters.
+
+**Solution**
+
+```sql
+ALTER TABLE dbo.Customers
+ALTER COLUMN PhoneNumber VARCHAR(30) NULL;
+```
+
+**Expected outcome**
+
+The column should support values up to 30 characters.
+
+### Exercise 7.3: Add a CHECK constraint
+
+**Task**
+
+Create an `Age` column on the `Employees` table and ensure that age values must be at least 18.
+
+**Solution**
+
+```sql
+ALTER TABLE dbo.Employees
+ADD Age INT NULL;
+
+ALTER TABLE dbo.Employees
+ADD CONSTRAINT CK_Employees_Age
+CHECK (Age IS NULL OR Age >= 18);
+```
+
+**Expected outcome**
+
+An employee may have an unknown age (`NULL`), but any non-NULL age must be at least 18.
+
+**Learning point:** Before adding a constraint to an existing table, check whether existing rows satisfy the new rule.
+
+---
+
+## 8. DELETE vs TRUNCATE vs DROP
+
+### Exercise 8.1: Compare the commands
+
+**Task**
+
+Explain the difference between `DELETE`, `TRUNCATE TABLE`, and `DROP TABLE`.
+
+**Solution**
+
+| Command | Effect | `WHERE` supported? | Table structure remains? |
+|---|---|---|---|
+| `DELETE` | Removes selected or all rows | Yes | Yes |
+| `TRUNCATE TABLE` | Removes all rows by deallocating data pages | No | Yes |
+| `DROP TABLE` | Removes the table definition and its data | No | No |
+
+Additional SQL Server considerations:
+
+- `DELETE` logs row deletions and can activate applicable delete triggers.
+- `TRUNCATE TABLE` resets an identity counter to its seed when applicable, but cannot be used on a table referenced by a foreign key.
+- `DROP TABLE` removes the table object, including its data and associated object definitions.
+- These commands can participate in transactions in SQL Server, but rollback is possible only while the transaction remains open and the operation has not been committed.
+
+### Exercise 8.2: Practise TRUNCATE safely
+
+**Task**
+
+Create a temporary practice table, insert sample rows, and remove all rows using `TRUNCATE TABLE`.
+
+**Solution**
+
+```sql
+CREATE TABLE dbo.TruncatePractice
+(
+    ID INT IDENTITY(1,1) PRIMARY KEY,
+    Description VARCHAR(100)
 );
 
-INSERT INTO inventory (item_id, item_name)
-VALUES (1, 'USB Cable');
+INSERT INTO dbo.TruncatePractice (Description)
+VALUES
+    ('First row'),
+    ('Second row'),
+    ('Third row');
+
+SELECT * FROM dbo.TruncatePractice;
+
+TRUNCATE TABLE dbo.TruncatePractice;
+
+SELECT * FROM dbo.TruncatePractice;
 ```
 
-This inserts a row where quantity becomes 0 and is_available becomes TRUE.
+**Expected outcome**
+
+The first `SELECT` returns three rows. The second returns zero rows, while the table still exists.
+
+### Exercise 8.3: Practise DROP safely
+
+**Task**
+
+Remove the practice table created in Exercise 8.2.
+
+**Solution**
+
+```sql
+DROP TABLE IF EXISTS dbo.TruncatePractice;
+```
+
+**Expected outcome**
+
+The table should no longer exist.
+
+**Important:** Do not use `DROP DATABASE` or destructive commands on databases containing important data.
 
 ---
 
-## 9. UPDATE Basics
+## 9. Temporary Tables
 
-UPDATE modifies existing rows.
+### Exercise 9.1: Create a local temporary table
 
-### Syntax
+**Task**
+
+Create a temporary table named `#TempProducts` containing three products.
+
+**Solution**
+
 ```sql
-UPDATE table_name
-SET column1 = value1, column2 = value2
-WHERE condition;
+CREATE TABLE #TempProducts
+(
+    ProductID INT,
+    ProductName VARCHAR(100),
+    Price DECIMAL(10,2)
+);
+
+INSERT INTO #TempProducts
+    (ProductID, ProductName, Price)
+VALUES
+    (201, 'Monitor', 12000.00),
+    (202, 'Webcam', 2500.00),
+    (203, 'Headset', 1800.00);
+
+SELECT * FROM #TempProducts;
 ```
 
-### Example
+**Expected outcome**
+
+The temporary table should contain three rows and be available in the current SQL Server session.
+
+### Exercise 9.2: Create a temporary table using SELECT INTO
+
+**Task**
+
+Copy all current products into a temporary table using `SELECT INTO`.
+
+**Solution**
+
 ```sql
-UPDATE customers
-SET city = 'Hyderabad'
-WHERE customer_id = 2;
+SELECT *
+INTO #ProductsCopy
+FROM dbo.Products;
+
+SELECT * FROM #ProductsCopy;
 ```
 
-### Important
-- Without `WHERE`, all rows in the table would be updated.
-- Use conditions carefully.
+**Expected outcome**
+
+`#ProductsCopy` should contain the product rows and column definitions derived from the source query.
+
+**Learning point:** `SELECT INTO` copies the selected columns and data, but does not automatically reproduce every source constraint, index, trigger, or other object property.
+
+### Exercise 9.3: Understand temporary table scope
+
+**Task**
+
+Explain the difference between local and global temporary tables.
+
+**Solution**
+
+| Feature | Local temporary table | Global temporary table |
+|---|---|---|
+| Example | `#TempProducts` | `##SharedProducts` |
+| Visibility | Current session | Multiple sessions, subject to SQL Server lifetime rules |
+| Typical use | Session-specific work | Shared temporary work |
+| Lifetime | Normally until the creating session ends, or until explicitly dropped | Remains until the creating session ends and concurrent references have finished |
+
+**Example**
+
+```sql
+CREATE TABLE ##SharedProducts
+(
+    ProductID INT,
+    ProductName VARCHAR(100)
+);
+
+INSERT INTO ##SharedProducts
+VALUES (1, 'Shared Example');
+
+SELECT * FROM ##SharedProducts;
+
+DROP TABLE ##SharedProducts;
+```
+
+**Expected outcome**
+
+The global temporary table can be accessed by other sessions while it exists and is visible to them.
+
+**Caution:** Global temporary tables can introduce concurrency and naming conflicts. Use them only when cross-session sharing is genuinely needed.
 
 ---
 
-## 10. DELETE Basics
+## 10. Copying and Cloning Tables
 
-DELETE removes rows from a table.
+### Exercise 10.1: Copy selected data into a new table
 
-### Syntax
+**Task**
+
+Create a new table containing only products priced above `1000.00`.
+
+**Solution**
+
 ```sql
-DELETE FROM table_name
-WHERE condition;
+SELECT
+    ProductID,
+    ProductName,
+    Price,
+    StockQuantity,
+    Category
+INTO dbo.ExpensiveProducts
+FROM dbo.Products
+WHERE Price > 1000.00;
 ```
 
-### Example
+**Expected outcome**
+
+The new table should contain only qualifying products.
+
+### Exercise 10.2: Create an empty copy of a table's columns
+
+**Task**
+
+Create a new table with the same column names and data types as `Products`, without copying its rows.
+
+**Solution**
+
 ```sql
-DELETE FROM customers
-WHERE customer_id = 3;
+SELECT TOP (0)
+    ProductID,
+    ProductName,
+    Price,
+    StockQuantity,
+    Category
+INTO dbo.ProductsStructureCopy
+FROM dbo.Products;
 ```
 
-### Important
-- Without `WHERE`, all rows would be deleted.
-- Use backups before deleting records.
+**Expected outcome**
+
+The new table should have the selected columns and zero rows.
+
+**Learning point:** SQL Server does not support the generic `CREATE TABLE new_table LIKE existing_table` syntax used by some other database systems. `SELECT INTO` is useful for copying query results, but it does not create a complete clone of all source table metadata.
 
 ---
 
-## 11. ALTER TABLE
+## 11. Integrated Mini-Project: Retail Database
 
-ALTER TABLE is used to add, modify, or remove columns.
+In this mini-project, you will create a small retail database structure and practise the concepts from this module.
 
-### Add a Column
+### Exercise 11.1: Create an OrderItems table
+
+**Task**
+
+Create an `OrderItems` table with:
+
+- `OrderItemID`: primary key.
+- `OrderID`: foreign key referencing `Orders`.
+- `ProductID`: foreign key referencing `Products`.
+- `Quantity`: required and greater than zero.
+- `UnitPrice`: required and non-negative.
+
+**Solution**
+
 ```sql
-ALTER TABLE customers
-ADD COLUMN last_login DATE;
+CREATE TABLE dbo.OrderItems
+(
+    OrderItemID INT PRIMARY KEY,
+    OrderID INT NOT NULL,
+    ProductID INT NOT NULL,
+    Quantity INT NOT NULL,
+    UnitPrice DECIMAL(10,2) NOT NULL,
+
+    CONSTRAINT CK_OrderItems_Quantity
+        CHECK (Quantity > 0),
+
+    CONSTRAINT CK_OrderItems_UnitPrice
+        CHECK (UnitPrice >= 0),
+
+    CONSTRAINT FK_OrderItems_Orders
+        FOREIGN KEY (OrderID)
+        REFERENCES dbo.Orders(OrderID),
+
+    CONSTRAINT FK_OrderItems_Products
+        FOREIGN KEY (ProductID)
+        REFERENCES dbo.Products(ProductID)
+);
 ```
 
-### Rename a Column
+**Expected outcome**
+
+The table should enforce valid quantities, prices, and references to existing orders and products.
+
+### Exercise 11.2: Insert order items
+
+**Task**
+
+Insert two items for order `5001`:
+
+| OrderItemID | OrderID | ProductID | Quantity | UnitPrice |
+|---:|---:|---:|---:|---:|
+| 1 | 5001 | 101 | 1 | 65000.00 |
+| 2 | 5001 | 102 | 2 | 750.00 |
+
+**Solution**
+
 ```sql
-ALTER TABLE customers
-RENAME COLUMN city TO residence_city;
+INSERT INTO dbo.OrderItems
+    (OrderItemID, OrderID, ProductID, Quantity, UnitPrice)
+VALUES
+    (1, 5001, 101, 1, 65000.00),
+    (2, 5001, 102, 2, 750.00);
 ```
 
-### Change Data Type
+**Expected outcome**
+
+Two order-item records should be inserted, assuming the referenced order and products exist.
+
+### Exercise 11.3: Update stock quantity
+
+**Task**
+
+Reduce stock by one for product `101`.
+
+**Solution**
+
 ```sql
-ALTER TABLE customers
-ALTER COLUMN phone VARCHAR(25);
+UPDATE dbo.Products
+SET StockQuantity = StockQuantity - 1
+WHERE ProductID = 101
+  AND StockQuantity >= 1;
 ```
 
-### Drop a Column
+**Expected outcome**
+
+The stock quantity should decrease by one if the product exists and has at least one item in stock.
+
+**Discussion:** Why is the stock condition included in the `WHERE` clause?
+
+### Exercise 11.4: Validate the mini-project
+
+**Task**
+
+Write queries to:
+
+1. Display all customers.
+2. Display products with a price above `1000.00`.
+3. Display orders for customer ID 1.
+4. Display all items belonging to order ID 5001.
+5. Count the number of rows in each main table.
+
+**Solution**
+
 ```sql
-ALTER TABLE products
-DROP COLUMN discount_percent;
+-- 1. Customers
+SELECT * FROM dbo.Customers;
+
+-- 2. Products above 1000
+SELECT *
+FROM dbo.Products
+WHERE Price > 1000.00;
+
+-- 3. Orders for customer 1
+SELECT *
+FROM dbo.Orders
+WHERE CustomerID = 1;
+
+-- 4. Items for order 5001
+SELECT *
+FROM dbo.OrderItems
+WHERE OrderID = 5001;
+
+-- 5. Table row counts
+SELECT 'Customers' AS TableName, COUNT(*) AS TotalRows
+FROM dbo.Customers
+UNION ALL
+SELECT 'Products', COUNT(*) FROM dbo.Products
+UNION ALL
+SELECT 'Orders', COUNT(*) FROM dbo.Orders
+UNION ALL
+SELECT 'OrderItems', COUNT(*) FROM dbo.OrderItems;
 ```
+
+**Expected outcome**
+
+Each query should return the data matching its purpose. Row counts will depend on which exercises you have executed.
 
 ---
 
-## 12. DROP TABLE and TRUNCATE TABLE
+## 12. Final Assessment
 
-### TRUNCATE
-Removes all rows from a table but keeps the table structure.
+Attempt these questions independently before reviewing the earlier solutions.
+
+### Beginner Level
+
+1. Create a table called `Departments` with a primary key and a required department name.
+2. Insert three departments.
+3. Add a location column to the table.
+4. Update the location of one department.
+5. Delete one department by its ID.
+
+### Intermediate Level
+
+6. Create an `Inventory` table with a primary key, product name, quantity, and unit price.
+7. Add a constraint that prevents negative quantities and prices.
+8. Insert multiple inventory records in one statement.
+9. Increase the price of all products in a selected category by 8%.
+10. Create a temporary table containing inventory items with a quantity below five.
+11. Copy inventory records into a new permanent table using `SELECT INTO`.
+12. Explain why dropping a parent record may fail when a foreign key references it.
+
+### Assessment Solutions
+
+**1. Create Departments**
 
 ```sql
-TRUNCATE TABLE orders;
+CREATE TABLE dbo.Departments
+(
+    DepartmentID INT PRIMARY KEY,
+    DepartmentName VARCHAR(100) NOT NULL
+);
 ```
 
-### DROP
-Removes the full table definition and data.
+**2. Insert departments**
 
 ```sql
-DROP TABLE orders;
+INSERT INTO dbo.Departments
+    (DepartmentID, DepartmentName)
+VALUES
+    (1, 'Engineering'),
+    (2, 'Finance'),
+    (3, 'Operations');
 ```
 
-### Difference
-- `TRUNCATE`: empties the table, keeps structure.
-- `DROP`: removes the table completely.
+**3. Add a location column**
+
+```sql
+ALTER TABLE dbo.Departments
+ADD Location VARCHAR(100) NULL;
+```
+
+**4. Update one department**
+
+```sql
+UPDATE dbo.Departments
+SET Location = 'Hyderabad'
+WHERE DepartmentID = 1;
+```
+
+**5. Delete one department**
+
+```sql
+DELETE FROM dbo.Departments
+WHERE DepartmentID = 3;
+```
+
+**6. Create Inventory**
+
+```sql
+CREATE TABLE dbo.Inventory
+(
+    InventoryID INT PRIMARY KEY,
+    ProductName VARCHAR(100) NOT NULL,
+    Quantity INT NOT NULL,
+    UnitPrice DECIMAL(10,2) NOT NULL
+);
+```
+
+**7. Add validation constraints**
+
+```sql
+ALTER TABLE dbo.Inventory
+ADD CONSTRAINT CK_Inventory_Quantity
+CHECK (Quantity >= 0);
+
+ALTER TABLE dbo.Inventory
+ADD CONSTRAINT CK_Inventory_UnitPrice
+CHECK (UnitPrice >= 0);
+```
+
+**8. Insert multiple inventory records**
+
+```sql
+INSERT INTO dbo.Inventory
+    (InventoryID, ProductName, Quantity, UnitPrice)
+VALUES
+    (1, 'Laptop', 10, 65000.00),
+    (2, 'Mouse', 40, 750.00),
+    (3, 'Keyboard', 4, 1500.00);
+```
+
+**9. Increase prices in a selected category**
+
+The `Inventory` table does not contain a category column, so add one first.
+
+```sql
+ALTER TABLE dbo.Inventory
+ADD Category VARCHAR(50) NULL;
+
+UPDATE dbo.Inventory
+SET Category = 'Accessories'
+WHERE InventoryID IN (2, 3);
+
+UPDATE dbo.Inventory
+SET UnitPrice = UnitPrice * 1.08
+WHERE Category = 'Accessories';
+```
+
+**10. Create a temporary table for low-stock products**
+
+```sql
+SELECT *
+INTO #LowStockInventory
+FROM dbo.Inventory
+WHERE Quantity < 5;
+
+SELECT * FROM #LowStockInventory;
+```
+
+**11. Copy inventory into a new permanent table**
+
+```sql
+SELECT *
+INTO dbo.InventoryBackup
+FROM dbo.Inventory;
+```
+
+This creates a new table containing the selected source columns and rows. It does not automatically copy every constraint or index.
+
+**12. Explain the foreign key restriction**
+
+A parent row cannot normally be deleted while dependent child rows reference it through a foreign key. The child rows must be handled first, or the relationship must have an intentionally configured deletion rule such as `ON DELETE CASCADE`.
 
 ---
 
-## 13. Temporary Tables and Clones
+## 13. Safe SQL Execution Checklist
 
-### Temporary Table
-Useful for intermediate working data.
+Before executing any script, verify the following:
+
+- [ ] Confirm the selected database with `SELECT DB_NAME();`.
+- [ ] Inspect existing records before running `UPDATE` or `DELETE`.
+- [ ] Include a suitable `WHERE` clause when changing or deleting selected records.
+- [ ] Check foreign key relationships before deleting parent records.
+- [ ] Avoid `DROP`, `TRUNCATE`, or unrestricted `DELETE` on tables containing important data.
+- [ ] Use a disposable practice database for destructive exercises.
+- [ ] Validate results with `SELECT` statements.
+- [ ] Remember that `SELECT INTO` creates a new table and fails if the destination table already exists.
+- [ ] Clean up temporary or practice objects when no longer needed.
+
+### Optional transaction-based practice
+
+For a simple update that you want to inspect before keeping, you can use a transaction:
 
 ```sql
-CREATE TEMPORARY TABLE temp_products AS
-SELECT * FROM products WHERE price > 2000;
+BEGIN TRANSACTION;
+
+UPDATE dbo.Products
+SET Price = Price * 1.05
+WHERE ProductID = 102;
+
+SELECT *
+FROM dbo.Products
+WHERE ProductID = 102;
+
+-- Choose one:
+-- COMMIT TRANSACTION;
+-- ROLLBACK TRANSACTION;
 ```
 
-### Clone / Backup Table
-```sql
-CREATE TABLE products_backup AS
-SELECT * FROM products;
-```
-
-This copies the table structure and data into a new table.
+Execute either `COMMIT TRANSACTION` to keep the change or `ROLLBACK TRANSACTION` to undo it before the transaction is committed. Do not leave transactions open unnecessarily.
 
 ---
 
-## Summary
-This module lays the foundation of database design and SQL manipulation. You now understand how to create databases, design tables, define constraints, insert data, and modify existing records safely.
+## 14. Module 1 Completion Checklist
 
----
+By the end of this module, you should be able to:
 
-## Interview Questions
-1. What is the difference between a database and a table?
-2. Why is a primary key important?
-3. When would you use a foreign key?
-4. What does NOT NULL do?
-5. Why is a CHECK constraint useful?
-6. What is the difference between INSERT and UPDATE?
-7. Why should you avoid DELETE without WHERE?
-8. What is the difference between TRUNCATE and DROP?
+- [ ] Create and select a database.
+- [ ] Create tables with suitable data types.
+- [ ] Define primary and foreign keys.
+- [ ] Apply constraints and default values.
+- [ ] Insert single and multiple records.
+- [ ] Update and delete records safely.
+- [ ] Add columns and constraints using `ALTER TABLE`.
+- [ ] Explain `DELETE`, `TRUNCATE`, and `DROP`.
+- [ ] Create local and global temporary tables.
+- [ ] Copy table data using `SELECT INTO`.
+- [ ] Complete the retail mini-project without copying the solutions.
 
 
